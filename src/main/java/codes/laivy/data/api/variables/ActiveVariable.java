@@ -6,26 +6,35 @@ import codes.laivy.data.api.Variable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
+import java.util.Objects;
 
 public class ActiveVariable {
 
-    private final Receptor receptor;
-    private final Variable variable;
-    private Serializable value;
+    protected final @NotNull Receptor receptor;
+    protected final @NotNull Variable variable;
+    protected @Nullable Object value;
 
-    public ActiveVariable(@NotNull Variable variable, @NotNull Receptor receptor, @Nullable Serializable value) {
+    public ActiveVariable(@NotNull Variable variable, @NotNull Receptor receptor, @Nullable Object value) {
         this.variable = variable;
         this.receptor = receptor;
         this.value = value;
+
+        if (load()) {
+            DataAPI.ACTIVE_VARIABLES.get(receptor).add(this);
+        }
+    }
+
+    protected boolean load() {
+        if (Objects.equals(getValue(), "<!NULL>")) {
+            this.value = null;
+        }
 
         InactiveVariable inactiveVariable = DataAPI.getInactiveVariable(receptor, variable.getName());
         if (inactiveVariable != null) {
             this.value = Variable.unserialize(inactiveVariable.getValue());
             DataAPI.INACTIVE_VARIABLES.get(receptor).remove(inactiveVariable);
         }
-
-        DataAPI.ACTIVE_VARIABLES.get(receptor).add(this);
+        return true;
     }
 
     @NotNull
@@ -38,12 +47,12 @@ public class ActiveVariable {
         return variable;
     }
 
-    @NotNull
-    public Serializable getValue() {
+    @Nullable
+    public Object getValue() {
         return this.value;
     }
 
-    public void setValue(@Nullable Serializable value) {
+    public void setValue(@Nullable Object value) {
         this.value = value;
     }
 

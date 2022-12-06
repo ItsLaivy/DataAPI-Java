@@ -7,12 +7,17 @@ import org.jetbrains.annotations.Nullable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class MySQLResult extends DataResult {
 
-    private final ResultSet result;
+    private final @Nullable ResultSet result;
+
+    public @Nullable ResultSet getResult() {
+        return result;
+    }
 
     public MySQLResult(@Nullable ResultSet result) {
         this.result = result;
@@ -35,7 +40,7 @@ public class MySQLResult extends DataResult {
     public @NotNull Map<String, String> results() {
         if (result != null) {
             try {
-                Map<String, String> map = new TreeMap<>();
+                Map<String, String> map = new LinkedHashMap<>();
                 result.next();
 
                 if (result.getObject(1) == null) {
@@ -55,4 +60,18 @@ public class MySQLResult extends DataResult {
         }
         return new HashMap<>();
     }
+
+    @Override
+    public void close() {
+        if (result != null) {
+            try {
+                if (!result.isClosed()) {
+                    result.getStatement().close();
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }

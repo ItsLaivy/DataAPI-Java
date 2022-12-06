@@ -2,25 +2,26 @@ package codes.laivy.data.sql.mysql;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Database;
-import codes.laivy.data.api.Receptor;
-import codes.laivy.data.api.Table;
+import codes.laivy.data.sql.*;
 import codes.laivy.data.api.Variable;
 import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
-import codes.laivy.data.query.DatabaseType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.sql.*;
 import java.util.Map;
+import java.util.Objects;
 
-public class MySQLDatabaseType extends DatabaseType {
+public class MySQLDatabaseType extends SQLDatabaseType {
 
-    protected final Connection connection;
+    protected @Nullable Connection connection;
 
-    protected final String user;
-    protected final String password;
+    protected final @NotNull String user;
+    protected final @NotNull String password;
     protected final int port;
-    protected final String address;
+    protected final @NotNull String address;
 
     public MySQLDatabaseType(@NotNull String user, @NotNull String password, int port, @NotNull String address) {
         super("MYSQL");
@@ -30,33 +31,51 @@ public class MySQLDatabaseType extends DatabaseType {
         this.port = port;
         this.address = address;
 
+        open();
+    }
+
+    public void open() {
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://" + address + ":" + port + "/?autoReconnect=true&failOverReadOnly=false&maxReconnects=10&verifyServerCertificate=false", user, password);
+            Class.forName("com.mysql.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mysql://" + address + ":" + port + "/?autoReconnect=true&failOverReadOnly=false&verifyServerCertificate=false", user, password);
 
             if (getConnection().isClosed()) {
                 throw new IllegalStateException("The database's connection is closed!");
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Couldn't authenticate to MySQLDatabase", e);
+        } catch (Throwable e) {
+            if (e.getClass().equals(ClassNotFoundException.class)) {
+                throw new RuntimeException("Couldn't get the JDBC Drivers for the MySQL connection!", e);
+            } else {
+                throw new RuntimeException("Couldn't authenticate to MySQLDatabase", e);
+            }
+        }
+    }
+    public void close() {
+        if (this.connection != null) {
+            try {
+                this.connection.close();
+            } catch (SQLException e) {
+                throwError(e);
+            }
         }
     }
 
-    public String getUser() {
+    public @NotNull String getUser() {
         return user;
     }
-    public String getPassword() {
+    public @NotNull String getPassword() {
         return password;
     }
     public int getPort() {
         return port;
     }
-    public String getAddress() {
+    public @NotNull String getAddress() {
         return address;
     }
 
     @NotNull
     public synchronized Connection getConnection() {
-        return connection;
+        return Objects.requireNonNull(connection);
     }
 
     @Override
@@ -69,39 +88,24 @@ public class MySQLDatabaseType extends DatabaseType {
     }
 
     private void query(@NotNull String query) {
-        try (PreparedStatement statement = getConnection().prepareStatement(query)) {
-            statement.executeQuery();
-        } catch (SQLException ex) {
-            if (ex.getMessage().equals("Statement.executeQuery() cannot issue statements that do not produce result sets.")) {
-                try (PreparedStatement statement = getConnection().prepareStatement(query)) {
-                    statement.executeUpdate();
-                } catch (SQLException ex2) {
-                    throwError(ex2);
-                }
-            } else {
-                throwError(ex);
-            }
-        }
+        new MySQLStatement(this, query).execute();
     }
 
     @Override
-    public @NotNull Map<String, String> data(@NotNull Receptor receptor) {
-        if (!(receptor.getTable().getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This receptor's database isn't an MySQL database!");
-        }
-
-        return ((MySQLDatabase) receptor.getTable().getDatabase()).query("SELECT * FROM " + receptor.getTable().getDatabase().getName() + "." + receptor.getTable().getName() + " WHERE bruteid = '" + receptor.getBruteId() + "'").results();
+    public @NotNull Map<String, String> data(@NotNull SQLReceptor receptor) {
+        MySQLResult query = (MySQLResult) receptor.getTable().getDatabase().query("SELECT * FROM " + receptor.getTable().getName() + " WHERE bruteid = '" + receptor.getBruteId() + "'");
+        Map<String, String> results = query.results();
+        query.close();
+        return results;
     }
 
     @Override
-    public void receptorLoad(@NotNull Receptor receptor) {
-        if (!(receptor.getTable().getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This receptor's database isn't an MySQL database!");
-        }
-
+    public void receptorLoad(@NotNull SQLReceptor receptor) {
         Map<String, String> data = data(receptor);
+        receptor.setNew(data.isEmpty());
+
         if (data.isEmpty()) {
-            query("INSERT INTO " + receptor.getTable().getDatabase().getName() + "." + receptor.getTable().getName() + " (name,bruteid,last_update) VALUES ('" + receptor.getName() + "','" + receptor.getBruteId() + "','" + DataAPI.getDate() + "')");
+            receptor.getDatabase().query("INSERT INTO " + receptor.getTable().getName() + " (name,bruteid,last_update) VALUES ('" + receptor.getName() + "','" + receptor.getBruteId() + "','" + DataAPI.getDate() + "')");
             data = data(receptor);
         }
 
@@ -112,103 +116,95 @@ public class MySQLDatabaseType extends DatabaseType {
             }
             row++;
         }
+        for (Variable variable : Variable.TEMPORARY_VARIABLES) {
+            if (variable instanceof SQLVariable) {
+                SQLVariable var = (SQLVariable) variable;
+                if (var.getTable().equals(receptor.getTable())) {
+                    new ActiveVariable(variable, receptor, variable.getDefaultValue());
+                }
+            }
+        }
     }
 
     @Override
-    public void receptorDelete(@NotNull Receptor receptor) {
-        if (!(receptor.getTable().getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This receptor's database isn't an MySQL database!");
-        }
-
-        query("DELETE FROM " + receptor.getTable().getDatabase().getName() + "." + receptor.getTable().getName() + " WHERE bruteid = '" + receptor.getBruteId() + "'");
+    public void receptorDelete(@NotNull SQLReceptor receptor) {
+        receptor.getDatabase().query("DELETE FROM " + receptor.getTable().getName() + " WHERE bruteid = '" + receptor.getBruteId() + "'");
     }
 
     @Override
-    public void save(@NotNull Receptor receptor) {
-        if (!(receptor.getTable().getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This receptor's database isn't an MySQL database!");
-        }
-
+    public void save(@NotNull SQLReceptor receptor) {
         StringBuilder query = new StringBuilder();
         for (ActiveVariable variable : receptor.getActiveVariables()) {
-            query.append("`").append(variable.getVariable().getName()).append("`='").append(Variable.serialize(variable.getValue())).append("',");
+            if (!variable.getVariable().isSaveToDatabase()) {
+                continue;
+            }
+
+            String data;
+            if (variable.getVariable().isSerialize()) {
+                if (!(variable.getValue() instanceof Serializable)) {
+                    throw new IllegalArgumentException("The variable is a serializable variable, but the current value isn't a instance of Serializable!");
+                }
+
+                data = Variable.serialize((Serializable) variable.getValue());
+            } else {
+                data = variable.getValue() != null ? variable.getValue().toString() : "";
+            }
+
+            query.append("`").append(variable.getVariable().getName()).append("`='").append(data).append("',");
         }
         query.append("`last_update`='").append(DataAPI.getDate()).append("'");
 
-        query("UPDATE " + receptor.getTable().getDatabase().getName() + "." + receptor.getTable().getName() + " SET " + query + " WHERE bruteid = '" + receptor.getBruteId() + "'");
+        receptor.getDatabase().query("UPDATE " + receptor.getTable().getName() + " SET " + query + " WHERE bruteid = '" + receptor.getBruteId() + "'");
     }
 
     @Override
-    public void tableLoad(@NotNull Table table) {
-        if (!(table.getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This table's database isn't an MySQL database!");
-        }
+    public void tableLoad(@NotNull SQLTable sqlTable) {
+        sqlTable.getDatabase().query("CREATE TABLE " + sqlTable.getName() + " (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(128), bruteid VARCHAR(128), last_update VARCHAR(21));");
+    }
 
+    @Override
+    public void tableDelete(@NotNull SQLTable sqlTable) {
+        sqlTable.getDatabase().query("DROP TABLE " + sqlTable.getName());
+    }
+
+    @Override
+    public void variableLoad(@NotNull SQLVariable variable) {
         try {
-            query("CREATE TABLE " + table.getDatabase().getName() + "." + table.getName() + " (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(128), bruteid VARCHAR(128), last_update VARCHAR(21));");
+            if (variable.isSaveToDatabase()) {
+                String data;
+                if (variable.isSerialize()) {
+                    if (!(variable.getDefaultValue() instanceof Serializable)) {
+                        throw new IllegalArgumentException("A opção de serialização está ativada mas o valor padrão não extende Serializable!");
+                    }
+
+                    data = Variable.serialize((Serializable) variable.getDefaultValue());
+                } else {
+                    if (variable.getDefaultValue() != null) {
+                        data = variable.getDefaultValue().toString();
+                    } else {
+                        data = "<!NULL>";
+                    }
+                }
+
+                variable.getDatabase().query("ALTER TABLE " + variable.getTable().getName() + " ADD COLUMN " + variable.getName() + " MEDIUMTEXT DEFAULT '" + data + "';");
+            }
         } catch (Throwable e) {
             throwError(e);
         }
     }
 
     @Override
-    public void tableDelete(@NotNull Table table) {
-        if (!(table.getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This table's database isn't an MySQL database!");
-        }
-
-        query("DROP TABLE " + table.getDatabase().getName() + "." + table.getName());
-    }
-
-    @Override
-    public void variableLoad(@NotNull Variable variable) {
-        if (!(variable.getTable().getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This variable's database isn't an MySQL database!");
-        }
-
-        try {
-            query("ALTER TABLE " + variable.getTable().getDatabase().getName() + "." + variable.getTable().getName() + " ADD COLUMN " + variable.getName() + " MEDIUMTEXT DEFAULT '" + Variable.serialize(variable.getDefaultValue()) + "';");
-        } catch (Throwable e) {
-            throwError(e);
-        }
-    }
-
-    @Override
-    public void variableDelete(@NotNull Variable variable) {
-        if (!(variable.getTable().getDatabase().getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This variable's database isn't an MySQL database!");
-        }
-
-        try {
-            query("ALTER TABLE " + variable.getTable().getDatabase().getName() + "." + variable.getTable().getName() + " DROP COLUMN '" + variable.getName());
-        } catch (Throwable e) {
-            throwError(e);
-        }
+    public void variableDelete(@NotNull SQLVariable variable) {
+        variable.getDatabase().query("ALTER TABLE " + variable.getTable().getName() + " DROP COLUMN '" + variable.getName());
     }
 
     @Override
     public void databaseLoad(@NotNull Database database) {
-        if (!(database.getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This database isn't an MySQL database!");
-        }
-
-        try {
-            query("CREATE DATABASE " + database.getName());
-        } catch (Throwable e) {
-            throwError(e);
-        }
+        query("CREATE DATABASE " + database.getName());
     }
 
     @Override
     public void databaseDelete(@NotNull Database database) {
-        if (!(database.getDatabaseType() instanceof MySQLDatabaseType)) {
-            throw new IllegalArgumentException("This database isn't an MySQL database!");
-        }
-
-        try {
-            query("DROP DATABASE " + database.getName());
-        } catch (Throwable e) {
-            throwError(e);
-        }
+        query("DROP DATABASE " + database.getName());
     }
 }

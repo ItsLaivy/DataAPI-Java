@@ -7,12 +7,17 @@ import org.jetbrains.annotations.Nullable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class SQLiteResult extends DataResult {
 
-    private final ResultSet result;
+    private final @Nullable ResultSet result;
+
+    public @Nullable ResultSet getResult() {
+        return result;
+    }
 
     public SQLiteResult(@Nullable ResultSet result) {
         this.result = result;
@@ -35,9 +40,9 @@ public class SQLiteResult extends DataResult {
     public @NotNull Map<String, String> results() {
         if (result != null) {
             try {
-                Map<String, String> map = new TreeMap<>();
+                Map<String, String> map = new LinkedHashMap<>();
 
-                if (result.getObject(1) == null) {
+                if (result.isClosed() || result.getObject(1) == null) {
                     return map;
                 }
 
@@ -46,9 +51,23 @@ public class SQLiteResult extends DataResult {
                 }
                 return map;
             } catch (SQLException e) {
-                throw new RuntimeException("Cannot get columns data of a SQLiteDataResult", e);
+                throw new RuntimeException("Cannot get results data of a SQLiteDataResult", e);
             }
         }
         return new HashMap<>();
     }
+
+    @Override
+    public void close() {
+        if (result != null) {
+            try {
+                if (!result.isClosed()) {
+                    result.getStatement().close();
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }

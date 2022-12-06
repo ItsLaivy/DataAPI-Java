@@ -7,23 +7,29 @@ import org.jetbrains.annotations.NotNull;
 
 public class InactiveVariable {
 
-    private final Receptor receptor;
-    private final String variable;
-    private final String value;
+    protected final @NotNull Receptor receptor;
+    protected final @NotNull String variable;
+    protected final @NotNull String value;
 
     public InactiveVariable(@NotNull Receptor receptor, @NotNull String variableName, @NotNull String value) {
         this.variable = variableName;
         this.receptor = receptor;
         this.value = value;
 
-        Variable variable = DataAPI.getVariable(receptor.getTable(), variableName);
-        if (variable != null) {
-            new ActiveVariable(variable, receptor, Variable.unserialize(value));
-            return;
+        if (load()) {
+            DataAPI.INACTIVE_VARIABLES.get(receptor).add(this);
         }
-
-        DataAPI.INACTIVE_VARIABLES.get(receptor).add(this);
     }
+
+    protected boolean load() {
+        Variable variable;
+        if ((variable = DataAPI.getVariable(getReceptor().getDatabase(), getVariable())) != null) {
+            new ActiveVariable(variable, getReceptor(), (variable.isSerialize() ? Variable.unserialize(getValue()) : getValue()));
+            return false;
+        }
+        return true;
+    }
+
 
     @NotNull
     public Receptor getReceptor() {

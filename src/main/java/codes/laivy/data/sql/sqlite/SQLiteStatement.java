@@ -3,28 +3,40 @@ package codes.laivy.data.sql.sqlite;
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.query.DataStatement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class SQLiteStatement extends DataStatement {
 
-    private PreparedStatement statement;
+    private final @Nullable PreparedStatement statement;
+    private final @NotNull SQLiteDatabase database;
 
     public SQLiteStatement(@NotNull SQLiteDatabase database, @NotNull String query) {
-        super(database, query);
+        super(query);
+
+        this.database = database;
 
         try {
-            statement = database.getConnection().prepareStatement(getQuery());
+            statement = getDatabase().getConnection().prepareStatement(getQuery());
         } catch (Throwable e) {
-            database.getDatabaseType().throwError(e);
+            getDatabase().getDatabaseType().throwError(e);
+            throw new RuntimeException(e);
         }
+    }
+
+    public @NotNull SQLiteDatabase getDatabase() {
+        return database;
+    }
+    public final @Nullable PreparedStatement getStatement() {
+        return statement;
     }
 
     @Override
     public @NotNull SQLiteResult execute() {
         if (statement == null) {
-            if (DataAPI.DEBUG) System.out.println("Couldn't execute the 'execute' method of SQLiteStatement bacause the statement didn't have created successfully");
+            if (DataAPI.DEBUG) System.out.println("Couldn't execute the 'execute' method of SQLiteStatement because the statement didn't have created successfully");
             return new SQLiteResult(null);
         }
 

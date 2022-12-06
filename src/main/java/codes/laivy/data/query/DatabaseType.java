@@ -1,29 +1,24 @@
 package codes.laivy.data.query;
 
 import codes.laivy.data.DataAPI;
-import codes.laivy.data.api.Database;
-import codes.laivy.data.api.Receptor;
-import codes.laivy.data.api.Table;
-import codes.laivy.data.api.Variable;
+import codes.laivy.data.api.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class DatabaseType {
+public abstract class DatabaseType<R extends Receptor, V extends Variable> {
 
     @NotNull
     public abstract String[] suppressedErrors();
 
-    private final String name;
+    protected final @NotNull String name;
 
     public DatabaseType(@NotNull String name) {
         this.name = name;
 
-        if (!DataAPI.DATABASES.containsKey(this)) {
-            DataAPI.DATABASES.put(this, new ArrayList<>());
-        }
+        DataAPI.DATABASES.putIfAbsent(this, new HashSet<>());
     }
 
     @NotNull
@@ -31,7 +26,7 @@ public abstract class DatabaseType {
         return name;
     }
 
-    public void throwError(Throwable throwable) {
+    public void throwError(Throwable throwable) throws RuntimeException {
         if (DataAPI.DEBUG) System.out.println("Possible code error: '" + throwable.getClass() + "' - '" + throwable.getMessage() + "'");;
 
         for (String str : suppressedErrors()) {
@@ -50,46 +45,35 @@ public abstract class DatabaseType {
      * @return this Map needs to return a Map. (key = variable name) e (value = serializaded value)
      */
     @NotNull
-    public abstract Map<String, String> data(@NotNull Receptor receptor);
+    public abstract Map<String, String> data(@NotNull R receptor);
 
     /**
      * It's called when a receptor needs to be loaded
      */
-    public abstract void receptorLoad(@NotNull Receptor receptor);
+    public abstract void receptorLoad(@NotNull R receptor);
     /**
      * It's called when a receptor needs to be deleted
-     *
+     * <p>
      * Note: The {@link Receptor#unload(boolean)} is called first, and all variables
      * or (in)active variables already has get deleted.
      */
-    public abstract void receptorDelete(@NotNull Receptor receptor);
+    public abstract void receptorDelete(@NotNull R receptor);
 
     /**
      * It's used when a table needs get saved
      */
-    public abstract void save(@NotNull Receptor receptor);
-
-    // Tables
-
-    /**
-     * It's used when a table needs to load
-     */
-    public abstract void tableLoad(@NotNull Table table);
-    /**
-     * It's used when a table get deleted
-     */
-    public abstract void tableDelete(@NotNull Table table);
+    public abstract void save(@NotNull R receptor);
 
     // Variables
 
     /**
      * It's used when a variable get loaded
      */
-    public abstract void variableLoad(@NotNull Variable variable);
+    public abstract void variableLoad(@NotNull V variable);
     /**
      * It's used when a variable get deleted
      */
-    public abstract void variableDelete(@NotNull Variable variable);
+    public abstract void variableDelete(@NotNull V variable);
 
     // Databases
 
@@ -101,17 +85,4 @@ public abstract class DatabaseType {
      * It's used to delete a database
      */
     public abstract void databaseDelete(@NotNull Database database);
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DatabaseType that = (DatabaseType) o;
-        return Objects.equals(name, that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name);
-    }
 }

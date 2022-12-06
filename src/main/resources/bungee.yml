@@ -1,0 +1,10 @@
+name: "DataAPI-Java-Bungee"
+version: "5.0"
+main: codes.laivy.data.main.BungeePlugin
+author: "ItsLaivy (DanielZinh#7616)"
+api-version: 1.13
+
+website: "https://laivy.codes/"
+
+libraries:
+  - biz.paluch.redis:lettuce:4.5.0.Final

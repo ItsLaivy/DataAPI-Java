@@ -2,24 +2,37 @@ package codes.laivy.data.sql.mysql;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.query.DataStatement;
-import codes.laivy.data.sql.sqlite.SQLiteResult;
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class MySQLStatement extends DataStatement {
 
-    private PreparedStatement statement;
+    private final @Nullable PreparedStatement statement;
+    private final @NotNull MySQLDatabaseType type;
 
-    public MySQLStatement(@NotNull MySQLDatabase database, @NotNull String query) {
-        super(database, query);
+    public @Nullable PreparedStatement getStatement() {
+        return statement;
+    }
+
+    public MySQLStatement(@NotNull MySQLDatabaseType type, @NotNull String query) {
+        super(query);
+
+        this.type = type;
 
         try {
-            statement = ((MySQLDatabaseType) database.getDatabaseType()).getConnection().prepareStatement(getQuery());
+            statement = getType().getConnection().prepareStatement(getQuery());
         } catch (Throwable e) {
-            database.getDatabaseType().throwError(e);
+            getType().throwError(e);
+            throw new RuntimeException(e);
         }
+    }
+
+    public @NotNull MySQLDatabaseType getType() {
+        return type;
     }
 
     @Override
@@ -33,15 +46,28 @@ public class MySQLStatement extends DataStatement {
             try {
                 return new MySQLResult(statement.executeQuery());
             } catch (SQLException ex) {
-                if (ex.getMessage().equals("Query does not return results")) {
+                if (
+                        ex.getMessage().equals("Query does not return results") ||
+                        ex.getMessage().equals("Statement.executeQuery() cannot issue statements that do not produce result sets.")
+                ) {
                     statement.executeUpdate();
                     return new MySQLResult(null);
                 } else {
                     throw new RuntimeException("Couldn't execute/update MySQL statement", ex);
                 }
             }
+        } catch (CommunicationsException e) {
+            if (e.getMessage().contains("The last packet successfully received from the server was")) {
+                getType().close();
+                getType().open();
+
+                new MySQLStatement(type, getQuery()).execute();
+            } else {
+                getType().throwError(e);
+            }
         } catch (Throwable e) {
-            getDatabase().getDatabaseType().throwError(e);
+            System.out.println(e.getClass().getName());
+            getType().throwError(e);
         }
         return new MySQLResult(null);
     }
@@ -56,7 +82,7 @@ public class MySQLStatement extends DataStatement {
         try {
             statement.close();
         } catch (Throwable e) {
-            getDatabase().getDatabaseType().throwError(e);
+            getType().throwError(e);
         }
     }
 }

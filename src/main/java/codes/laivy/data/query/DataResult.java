@@ -8,5 +8,6 @@ public abstract class DataResult {
 
     public abstract int columns();
     public abstract @NotNull Map<String, String> results();
+    public abstract void close();
 
 }

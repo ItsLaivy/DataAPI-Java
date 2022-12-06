@@ -5,76 +5,76 @@ import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
 import codes.laivy.data.api.variables.VariableValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 
-public class Receptor {
+public abstract class Receptor {
 
-    private final Table table;
-    private String name;
-    private final String bruteId;
+    protected boolean isNew = false;
 
-    public Receptor(@NotNull Table table, @NotNull String name, @NotNull String bruteId) {
-        this.table = table;
+    protected @NotNull String name;
+    protected final @NotNull String bruteId;
+    protected final @NotNull Database database;
+
+    public abstract void save();
+    public abstract void delete();
+
+    public abstract void reload();
+
+    public Receptor(@NotNull Database database, @NotNull String name, @NotNull String bruteId) {
+        this.database = database;
         this.name = name;
         this.bruteId = bruteId;
 
-        if (DataAPI.getReceptor(table, bruteId) != null) {
-            throw new IllegalStateException("A receptor with brute id '" + bruteId + "' at table '" + table.getName() + "' of the database '" + getTable().getDatabase().getName() + " ('" + getTable().getDatabase().getDatabaseType().getName() + "')' already exists");
-        }
+        DataAPI.ACTIVE_VARIABLES.putIfAbsent(this, new HashSet<>());
+        DataAPI.INACTIVE_VARIABLES.putIfAbsent(this, new HashSet<>());
 
-        DataAPI.ACTIVE_VARIABLES.put(this, new ArrayList<>());
-        DataAPI.INACTIVE_VARIABLES.put(this, new ArrayList<>());
-
-        getTable().getDatabase().getDatabaseType().receptorLoad(this);
-
-        DataAPI.RECEPTORS.get(table).add(this);
+        DataAPI.RECEPTORS.putIfAbsent(database, new LinkedHashSet<>());
+        DataAPI.RECEPTORS.get(database).add(this);
     }
 
-    @NotNull
-    public Table getTable() {
-        return table;
+    public boolean isNew() {
+        return isNew;
     }
-    @NotNull
-    public String getBruteId() {
+    public void setNew(boolean isNew) {
+        this.isNew = isNew;
+    }
+
+    public @NotNull String getBruteId() {
         return bruteId;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
         return name;
     }
     public void setName(@NotNull String name) {
         this.name = name;
     }
 
+    public @NotNull Database getDatabase() {
+        return database;
+    }
+
     public void unload(boolean save) {
         if (save) save();
 
-        DataAPI.RECEPTORS.get(table).remove(this);
+        DataAPI.RECEPTORS.get(database).remove(this);
         DataAPI.ACTIVE_VARIABLES.remove(this);
         DataAPI.INACTIVE_VARIABLES.remove(this);
     }
 
-    public void delete() {
-        unload(false);
-        getTable().getDatabase().getDatabaseType().receptorDelete(this);
-    }
-
-    public void save() {
-        getTable().getDatabase().getDatabaseType().save(this);
-    }
-
-    public <T> T get(@NotNull String name) {
+    public @NotNull <T> T get(@NotNull String name) {
         //noinspection unchecked
-        return (T) new VariableValue<>(getActiveVariable(name)).getValue();
+        return (T) Objects.requireNonNull(new VariableValue<>(getActiveVariable(name)).getValue());
     }
-    public void set(@NotNull String name, Serializable value) {
+    public void set(@NotNull String name, @Nullable Object value) {
         new VariableValue<>(getActiveVariable(name)).setValue(value);
     }
 
-    public InactiveVariable[] getInactiveVariables() {
+    public @NotNull InactiveVariable[] getInactiveVariables() {
         InactiveVariable[] inactiveVariables = new InactiveVariable[DataAPI.INACTIVE_VARIABLES.get(this).size()];
         int row = 0;
         for (InactiveVariable inactiveVariable : DataAPI.INACTIVE_VARIABLES.get(this)) {
@@ -83,7 +83,7 @@ public class Receptor {
         }
         return inactiveVariables;
     }
-    public ActiveVariable[] getActiveVariables() {
+    public @NotNull ActiveVariable[] getActiveVariables() {
         ActiveVariable[] activeVariables = new ActiveVariable[DataAPI.ACTIVE_VARIABLES.get(this).size()];
         int row = 0;
         for (ActiveVariable inactiveVariable : DataAPI.ACTIVE_VARIABLES.get(this)) {
@@ -96,11 +96,11 @@ public class Receptor {
     /**
      * @throws NullPointerException if a variable with that name doesn't exist
      */
-    public InactiveVariable getInactiveVariable(String name) {
+    public @NotNull InactiveVariable getInactiveVariable(@NotNull String name) {
         InactiveVariable var = DataAPI.getInactiveVariable(this, name);
 
         if (var == null) {
-            throw new NullPointerException("This receptor doesn't contains any inactive variable named '" + name + "' at the table '" + getTable().getName() + "' of the database '" + getTable().getDatabase().getName() + " ('" + getTable().getDatabase().getDatabaseType().getName() + "')'");
+            throw new NullPointerException("This receptor doesn't contains any inactive variable named '" + name + "' of the database '" + getDatabase().getName() + " ('" + getDatabase().getDatabaseType().getName() + "')'");
         }
 
         return var;
@@ -108,14 +108,13 @@ public class Receptor {
     /**
      * @throws NullPointerException if a variable with that name doesn't exist
      */
-    public ActiveVariable getActiveVariable(String name) {
+    public @NotNull ActiveVariable getActiveVariable(@NotNull String name) {
         ActiveVariable var = DataAPI.getActiveVariable(this, name);
 
         if (var == null) {
-            throw new NullPointerException("This receptor doesn't contains any active variable named '" + name + "' at the table '" + getTable().getName() + "' of the database '" + getTable().getDatabase().getName() + " ('" + getTable().getDatabase().getDatabaseType().getName() + "')'");
+            throw new NullPointerException("This receptor doesn't contains any active variable named '" + name + "' of the database '" + getDatabase().getName() + " ('" + getDatabase().getDatabaseType().getName() + "')'");
         }
 
         return var;
     }
-
 }

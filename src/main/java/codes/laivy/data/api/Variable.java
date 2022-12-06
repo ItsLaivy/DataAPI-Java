@@ -1,55 +1,60 @@
 package codes.laivy.data.api;
 
 import codes.laivy.data.DataAPI;
-import codes.laivy.data.api.variables.ActiveVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Arrays;
+import java.util.*;
 
-public class Variable {
+public abstract class Variable {
 
-    private final String name;
-    private final Table table;
-    private final Serializable defaultValue;
-    private final boolean saveToDatabase;
+    public static final @NotNull Set<@NotNull Variable> TEMPORARY_VARIABLES = new LinkedHashSet<>();
 
-    public Variable(@NotNull String name, @NotNull Table table, @Nullable Serializable defaultValue) {
-        this(name, table, defaultValue, true);
+    protected final String name;
+    protected final Database database;
+    protected final Object defaultValue;
+    protected final boolean serialize;
+    protected final boolean saveToDatabase;
+
+    public abstract void delete();
+
+    public Variable(@NotNull String name, @NotNull Database database, @Nullable Object defaultValue) {
+        this(name, database, defaultValue, true, true);
     }
-    public Variable(@NotNull String name, @NotNull Table table, @Nullable Serializable defaultValue, boolean saveToDatabase) {
+    public Variable(@NotNull String name, @NotNull Database database, @Nullable Object defaultValue, boolean serialize, boolean saveToDatabase) {
         this.name = name;
-        this.table = table;
+        this.database = database;
         this.saveToDatabase = saveToDatabase;
         this.defaultValue = defaultValue;
+        this.serialize = serialize;
 
-        if (DataAPI.getVariable(table, name) != null) {
-            if (DataAPI.EXISTS_ERROR) throw new IllegalStateException("A variable named '" + name + "' at the table '" + getTable().getName() + "' in the database '" + getTable().getDatabase().getName() + " ('" + getTable().getDatabase().getDatabaseType().getName() + "')' already exists!");
+        if (DataAPI.getVariable(database, name) != null) {
             return;
         }
 
-        getTable().getDatabase().getDatabaseType().variableLoad(this);
+        if (isSerialize() && !(defaultValue instanceof Serializable)) {
+            throw new IllegalArgumentException("A opção de serialização está ativada mas o valor padrão não extende Serializable!");
+        }
 
-        DataAPI.VARIABLES.get(getTable()).add(this);
+        DataAPI.VARIABLES.putIfAbsent(database, new HashSet<>());
+        DataAPI.VARIABLES.get(database).add(this);
 
-        for (Receptor receptor : DataAPI.RECEPTORS.get(table)) {
-            new ActiveVariable(this, receptor, defaultValue);
+        if (!saveToDatabase) {
+            TEMPORARY_VARIABLES.add(this);
         }
     }
 
-    public void delete() {
-        for (Receptor receptor : DataAPI.RECEPTORS.get(getTable())) {
-            DataAPI.ACTIVE_VARIABLES.get(receptor).removeIf(activeVariable -> activeVariable.getVariable().equals(this));
-            DataAPI.INACTIVE_VARIABLES.get(receptor).removeIf(inactiveVariable -> inactiveVariable.getVariable().equals(this.getName()));
-        }
-
-        DataAPI.VARIABLES.get(getTable()).remove(this);
-        getTable().getDatabase().getDatabaseType().variableDelete(this);
+    public @NotNull Database getDatabase() {
+        return database;
     }
 
     public boolean isSaveToDatabase() {
         return saveToDatabase;
+    }
+
+    public boolean isSerialize() {
+        return serialize;
     }
 
     @NotNull
@@ -58,16 +63,11 @@ public class Variable {
     }
 
     @Nullable
-    public Serializable getDefaultValue() {
+    public Object getDefaultValue() {
         return defaultValue;
     }
 
-    @NotNull
-    public Table getTable() {
-        return table;
-    }
-
-    private static byte[] getVariableHashedValue(@Nullable Serializable value) {
+    protected static byte[] getVariableHashedValue(@Nullable Serializable value) {
         try {
             ByteArrayOutputStream b = new ByteArrayOutputStream();
             ObjectOutputStream stream = new ObjectOutputStream(b);
@@ -80,7 +80,7 @@ public class Variable {
     }
 
     @NotNull
-    private static Serializable getVariableUnhashedValue(byte[] value) {
+    protected static Serializable getVariableUnhashedValue(byte[] value) {
         try {
             ByteArrayInputStream b = new ByteArrayInputStream(value);
             ObjectInputStream stream = new ObjectInputStream(b);
@@ -92,10 +92,10 @@ public class Variable {
     }
 
     @NotNull
-    private static String byteArrayToString(byte[] byteArray) {
+    protected static String byteArrayToString(byte[] byteArray) {
         return Arrays.toString(byteArray).replace("[", "").replace("]", "").replace(", ", "/");
     }
-    private static byte[] stringToByteArray(@NotNull String byteArray) {
+    protected static byte[] stringToByteArray(@NotNull String byteArray) {
         String[] split = byteArray.split("/");
         byte[] b = new byte[split.length];
 
@@ -108,11 +108,23 @@ public class Variable {
         return b;
     }
 
-    public static String serialize(Serializable value) {
+    public static @NotNull String serialize(@Nullable Serializable value) {
         return Variable.byteArrayToString(Variable.getVariableHashedValue(value));
     }
-    public static Serializable unserialize(String string) {
+    public static @NotNull Serializable unserialize(@NotNull String string) {
         return Variable.getVariableUnhashedValue(Variable.stringToByteArray(string));
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Variable)) return false;
+        Variable variable = (Variable) o;
+        return Objects.equals(getName(), variable.getName()) && Objects.equals(getDatabase(), variable.getDatabase());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getDatabase());
+    }
 }

@@ -6,10 +6,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
-public class VariableValue<T extends Serializable> {
+public class VariableValue<T> {
 
-    private final Receptor receptor;
-    private final ActiveVariable variable;
+    protected final Receptor receptor;
+    protected final ActiveVariable variable;
 
     public VariableValue(@NotNull Receptor receptor, @NotNull String name) {
         this(receptor.getActiveVariable(name));
