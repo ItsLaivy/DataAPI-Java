@@ -66,7 +66,6 @@ public class MySQLStatement extends DataStatement {
                 getType().throwError(e);
             }
         } catch (Throwable e) {
-            System.out.println(e.getClass().getName());
             getType().throwError(e);
         }
         return new MySQLResult(null);
