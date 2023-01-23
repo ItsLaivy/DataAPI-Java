@@ -1,24 +1,22 @@
 package codes.laivy.data.redis.lettuce;
 
 import codes.laivy.data.DataAPI;
+import codes.laivy.data.api.Receptor;
+import codes.laivy.data.api.Table;
+import codes.laivy.data.api.Variable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class RedisTable {
+public class RedisTable extends Table {
 
     public static final @NotNull Map<@NotNull RedisTable, @NotNull Set<@NotNull RedisVariable>> REDIS_TABLED_VARIABLES = new HashMap<>();
     public static final @NotNull Map<@NotNull RedisTable, @NotNull Set<@NotNull RedisReceptor>> REDIS_TABLED_RECEPTORS = new HashMap<>();
 
     // ---/-/--- //
 
-    private final @NotNull RedisDatabase database;
-    private final @NotNull String name;
-
     public RedisTable(@NotNull RedisDatabase database, @NotNull String name) {
-        this.database = database;
-        this.name = name;
-
+        super(database, name);
 
         if (DataAPI.getRedisTable(database, name) != null) {
             throw new IllegalStateException("A RedisTable with that properties already exists!");
@@ -31,19 +29,33 @@ public class RedisTable {
         REDIS_TABLED_RECEPTORS.put(this, new LinkedHashSet<>());
     }
 
-    public @NotNull Set<@NotNull RedisVariable> getVariables() {
-        return REDIS_TABLED_VARIABLES.get(this);
+    @Override
+    public @NotNull RedisVariable[] getVariables() {
+        return REDIS_TABLED_VARIABLES.get(this).toArray(new RedisVariable[0]);
     }
-    public @NotNull Set<@NotNull RedisReceptor> getReceptors() {
-        return REDIS_TABLED_RECEPTORS.get(this);
+
+    @Override
+    public @NotNull RedisReceptor[] getReceptors() {
+        return REDIS_TABLED_RECEPTORS.get(this).toArray(new RedisReceptor[0]);
+    }
+
+    @Override
+    public void delete() {
+        // Unload receptors
+        for (Receptor receptor : getReceptors()) {
+            receptor.unload(false);
+        }
+        // Unload variables
+        for (Variable variable : getVariables()) {
+            variable.delete();
+        }
+
+        REDIS_TABLED_VARIABLES.remove(this);
+        REDIS_TABLED_RECEPTORS.remove(this);
     }
 
     public @NotNull RedisDatabase getDatabase() {
-        return database;
-    }
-
-    public @NotNull String getName() {
-        return name;
+        return (RedisDatabase) super.getDatabase();
     }
 
     @Override

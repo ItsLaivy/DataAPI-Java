@@ -1,4 +1,4 @@
-name: "DataAPI-Java-Bungee"
+name: "DataAPI-Java"
 version: "5.0"
 main: codes.laivy.data.main.BungeePlugin
 author: "ItsLaivy (DanielZinh#7616)"
@@ -8,3 +8,5 @@ website: "https://laivy.codes/"
 
 libraries:
   - biz.paluch.redis:lettuce:4.5.0.Final
+  - org.xerial:sqlite-jdbc:3.40.0.0
+  - mysql:mysql-connector-java:8.0.30

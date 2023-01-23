@@ -2,24 +2,21 @@ package codes.laivy.data.sql;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Receptor;
+import codes.laivy.data.api.Table;
 import codes.laivy.data.api.Variable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class SQLTable {
+public class SQLTable extends Table {
 
     public static final @NotNull Map<@NotNull SQLTable, @NotNull Set<@NotNull SQLVariable>> SQL_VARIABLES = new HashMap<>();
     public static final @NotNull Map<@NotNull SQLTable, @NotNull Set<@NotNull SQLReceptor>> SQL_RECEPTORS = new HashMap<>();
 
     // ---/-/--- //
 
-    private final @NotNull SQLDatabase database;
-    private final @NotNull String name;
-
     public SQLTable(@NotNull SQLDatabase database, @NotNull String name) {
-        this.database = database;
-        this.name = name;
+        super(database, name);
 
         if (DataAPI.getTable(database, name) != null) {
             if (DataAPI.EXISTS_ERROR) throw new IllegalStateException("A table named '" + name + "' from database '" + database.getName() + " ('" + database.getDatabaseType().getName() + "')' already exists!");
@@ -35,14 +32,10 @@ public class SQLTable {
 
     @NotNull
     public SQLDatabase getDatabase() {
-        return database;
+        return (SQLDatabase) super.getDatabase();
     }
 
-    @NotNull
-    public String getName() {
-        return name;
-    }
-
+    @Override
     public void delete() {
         // Unload receptors
         for (Receptor receptor : getReceptors()) {
@@ -56,7 +49,8 @@ public class SQLTable {
         getDatabase().getDatabaseType().tableDelete(this);
     }
 
-    public SQLReceptor[] getReceptors() {
+    @Override
+    public @NotNull SQLReceptor[] getReceptors() {
         SQLReceptor[] receptors = new SQLReceptor[SQL_RECEPTORS.get(this).size()];
         int row = 0;
         for (SQLReceptor receptor : SQL_RECEPTORS.get(this)) {
@@ -66,7 +60,8 @@ public class SQLTable {
         return receptors;
     }
 
-    public SQLVariable[] getVariables() {
+    @Override
+    public @NotNull SQLVariable[] getVariables() {
         SQLVariable[] variables = new SQLVariable[SQL_VARIABLES.get(this).size()];
         int row = 0;
         for (SQLVariable variable : SQL_VARIABLES.get(this)) {

@@ -9,11 +9,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.Objects;
 
 public abstract class Receptor {
 
     protected boolean isNew = false;
+    protected boolean loaded = false;
 
     protected @NotNull String name;
     protected final @NotNull String bruteId;
@@ -21,6 +21,8 @@ public abstract class Receptor {
 
     public abstract void save();
     public abstract void delete();
+
+    public abstract void load();
 
     public abstract void reload();
 
@@ -59,22 +61,36 @@ public abstract class Receptor {
     }
 
     public void unload(boolean save) {
+        if (!isLoaded()) {
+            throw new IllegalStateException("This receptor isn't loaded.");
+        }
+
         if (save) save();
 
         DataAPI.RECEPTORS.get(database).remove(this);
         DataAPI.ACTIVE_VARIABLES.remove(this);
         DataAPI.INACTIVE_VARIABLES.remove(this);
+
+        loaded = false;
     }
 
-    public @NotNull <T> T get(@NotNull String name) {
+    public boolean isLoaded() {
+        return loaded;
+    }
+
+    public @Nullable <T> T get(@NotNull String name) {
         //noinspection unchecked
-        return (T) Objects.requireNonNull(new VariableValue<>(getActiveVariable(name)).getValue());
+        return (T) getActiveVariable(name).getValue();
     }
     public void set(@NotNull String name, @Nullable Object value) {
-        new VariableValue<>(getActiveVariable(name)).setValue(value);
+        getActiveVariable(name).setValue(value);
     }
 
     public @NotNull InactiveVariable[] getInactiveVariables() {
+        if (!isLoaded()) {
+            throw new IllegalStateException("This receptor isn't loaded.");
+        }
+
         InactiveVariable[] inactiveVariables = new InactiveVariable[DataAPI.INACTIVE_VARIABLES.get(this).size()];
         int row = 0;
         for (InactiveVariable inactiveVariable : DataAPI.INACTIVE_VARIABLES.get(this)) {
@@ -84,6 +100,10 @@ public abstract class Receptor {
         return inactiveVariables;
     }
     public @NotNull ActiveVariable[] getActiveVariables() {
+        if (!isLoaded()) {
+            throw new IllegalStateException("This receptor isn't loaded.");
+        }
+
         ActiveVariable[] activeVariables = new ActiveVariable[DataAPI.ACTIVE_VARIABLES.get(this).size()];
         int row = 0;
         for (ActiveVariable inactiveVariable : DataAPI.ACTIVE_VARIABLES.get(this)) {

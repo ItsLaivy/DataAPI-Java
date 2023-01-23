@@ -44,7 +44,7 @@ public class SQLiteStatement extends DataStatement {
             try {
                 return new SQLiteResult(statement.executeQuery());
             } catch (SQLException ex) {
-                if (ex.getMessage().equals("Query does not return results")) {
+                if (ex.getMessage().equals("query does not return results")) {
                     statement.executeUpdate();
                     return new SQLiteResult(null);
                 } else {

@@ -93,7 +93,7 @@ public class MySQLDatabaseType extends SQLDatabaseType {
 
     @Override
     public @NotNull Map<String, String> data(@NotNull SQLReceptor receptor) {
-        MySQLResult query = (MySQLResult) receptor.getTable().getDatabase().query("SELECT * FROM " + receptor.getTable().getName() + " WHERE bruteid = '" + receptor.getBruteId() + "'");
+        MySQLResult query = (MySQLResult) receptor.getTable().getDatabase().query("SELECT * FROM `" + receptor.getTable().getName() + "` WHERE bruteid = '" + receptor.getBruteId() + "'");
         Map<String, String> results = query.results();
         query.close();
         return results;
@@ -105,7 +105,7 @@ public class MySQLDatabaseType extends SQLDatabaseType {
         receptor.setNew(data.isEmpty());
 
         if (data.isEmpty()) {
-            receptor.getDatabase().query("INSERT INTO " + receptor.getTable().getName() + " (name,bruteid,last_update) VALUES ('" + receptor.getName() + "','" + receptor.getBruteId() + "','" + DataAPI.getDate() + "')");
+            receptor.getDatabase().query("INSERT INTO `" + receptor.getTable().getName() + "` (name,bruteid,last_update) VALUES ('" + receptor.getName() + "','" + receptor.getBruteId() + "','" + DataAPI.getDate() + "')");
             data = data(receptor);
         }
 
@@ -128,7 +128,7 @@ public class MySQLDatabaseType extends SQLDatabaseType {
 
     @Override
     public void receptorDelete(@NotNull SQLReceptor receptor) {
-        receptor.getDatabase().query("DELETE FROM " + receptor.getTable().getName() + " WHERE bruteid = '" + receptor.getBruteId() + "'");
+        receptor.getDatabase().query("DELETE FROM `" + receptor.getTable().getName() + "` WHERE bruteid = '" + receptor.getBruteId() + "'");
     }
 
     @Override
@@ -142,7 +142,7 @@ public class MySQLDatabaseType extends SQLDatabaseType {
             String data;
             if (variable.getVariable().isSerialize()) {
                 if (!(variable.getValue() instanceof Serializable)) {
-                    throw new IllegalArgumentException("The variable is a serializable variable, but the current value isn't a instance of Serializable!");
+                    throw new IllegalArgumentException("The serialization option are enabled, but the value isn't a instance of Serializable!");
                 }
 
                 data = Variable.serialize((Serializable) variable.getValue());
@@ -154,17 +154,17 @@ public class MySQLDatabaseType extends SQLDatabaseType {
         }
         query.append("`last_update`='").append(DataAPI.getDate()).append("'");
 
-        receptor.getDatabase().query("UPDATE " + receptor.getTable().getName() + " SET " + query + " WHERE bruteid = '" + receptor.getBruteId() + "'");
+        receptor.getDatabase().query("UPDATE `" + receptor.getTable().getName() + "` SET " + query + " WHERE bruteid = '" + receptor.getBruteId() + "'");
     }
 
     @Override
     public void tableLoad(@NotNull SQLTable sqlTable) {
-        sqlTable.getDatabase().query("CREATE TABLE " + sqlTable.getName() + " (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(128), bruteid VARCHAR(128), last_update VARCHAR(21));");
+        sqlTable.getDatabase().query("CREATE TABLE `" + sqlTable.getName() + "` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(128), bruteid VARCHAR(128), last_update VARCHAR(21));");
     }
 
     @Override
     public void tableDelete(@NotNull SQLTable sqlTable) {
-        sqlTable.getDatabase().query("DROP TABLE " + sqlTable.getName());
+        sqlTable.getDatabase().query("DROP TABLE `" + sqlTable.getName() + "`");
     }
 
     @Override
@@ -174,7 +174,7 @@ public class MySQLDatabaseType extends SQLDatabaseType {
                 String data;
                 if (variable.isSerialize()) {
                     if (!(variable.getDefaultValue() instanceof Serializable)) {
-                        throw new IllegalArgumentException("A opção de serialização está ativada mas o valor padrão não extende Serializable!");
+                        throw new IllegalArgumentException("The serialization option are enabled, but the value isn't a instance of Serializable!");
                     }
 
                     data = Variable.serialize((Serializable) variable.getDefaultValue());
@@ -186,7 +186,7 @@ public class MySQLDatabaseType extends SQLDatabaseType {
                     }
                 }
 
-                variable.getDatabase().query("ALTER TABLE " + variable.getTable().getName() + " ADD COLUMN " + variable.getName() + " MEDIUMTEXT DEFAULT '" + data + "';");
+                variable.getDatabase().query("ALTER TABLE `" + variable.getTable().getName() + "` ADD COLUMN `" + variable.getName() + "` MEDIUMTEXT DEFAULT '" + data + "';");
             }
         } catch (Throwable e) {
             throwError(e);
@@ -195,16 +195,16 @@ public class MySQLDatabaseType extends SQLDatabaseType {
 
     @Override
     public void variableDelete(@NotNull SQLVariable variable) {
-        variable.getDatabase().query("ALTER TABLE " + variable.getTable().getName() + " DROP COLUMN '" + variable.getName());
+        variable.getDatabase().query("ALTER TABLE `" + variable.getTable().getName() + "` DROP COLUMN `" + variable.getName() + "`");
     }
 
     @Override
     public void databaseLoad(@NotNull Database database) {
-        query("CREATE DATABASE " + database.getName());
+        query("CREATE DATABASE `" + database.getName() + "`");
     }
 
     @Override
     public void databaseDelete(@NotNull Database database) {
-        query("DROP DATABASE " + database.getName());
+        query("DROP DATABASE `" + database.getName() + "`");
     }
 }

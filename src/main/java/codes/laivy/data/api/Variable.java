@@ -11,9 +11,9 @@ public abstract class Variable {
 
     public static final @NotNull Set<@NotNull Variable> TEMPORARY_VARIABLES = new LinkedHashSet<>();
 
-    protected final String name;
-    protected final Database database;
-    protected final Object defaultValue;
+    protected final @NotNull String name;
+    protected final @NotNull Database database;
+    protected final @Nullable Object defaultValue;
     protected final boolean serialize;
     protected final boolean saveToDatabase;
 
@@ -33,8 +33,8 @@ public abstract class Variable {
             return;
         }
 
-        if (isSerialize() && !(defaultValue instanceof Serializable)) {
-            throw new IllegalArgumentException("A opção de serialização está ativada mas o valor padrão não extende Serializable!");
+        if (defaultValue != null && isSerialize() && !(defaultValue instanceof Serializable)) {
+            throw new IllegalArgumentException("The serialization option are enabled, but the value isn't a instance of Serializable!");
         }
 
         DataAPI.VARIABLES.putIfAbsent(database, new HashSet<>());
@@ -79,7 +79,7 @@ public abstract class Variable {
         throw new IllegalStateException();
     }
 
-    @NotNull
+    @Nullable
     protected static Serializable getVariableUnhashedValue(byte[] value) {
         try {
             ByteArrayInputStream b = new ByteArrayInputStream(value);
@@ -111,7 +111,7 @@ public abstract class Variable {
     public static @NotNull String serialize(@Nullable Serializable value) {
         return Variable.byteArrayToString(Variable.getVariableHashedValue(value));
     }
-    public static @NotNull Serializable unserialize(@NotNull String string) {
+    public static @Nullable Serializable unserialize(@NotNull String string) {
         return Variable.getVariableUnhashedValue(Variable.stringToByteArray(string));
     }
 

@@ -48,7 +48,8 @@ public class MySQLStatement extends DataStatement {
             } catch (SQLException ex) {
                 if (
                         ex.getMessage().equals("Query does not return results") ||
-                        ex.getMessage().equals("Statement.executeQuery() cannot issue statements that do not produce result sets.")
+                        ex.getMessage().equals("Statement.executeQuery() cannot issue statements that do not produce result sets.") ||
+                        ex.getMessage().equals("Can not issue data manipulation statements with executeQuery().")
                 ) {
                     statement.executeUpdate();
                     return new MySQLResult(null);

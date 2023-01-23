@@ -14,6 +14,7 @@ import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
 import codes.laivy.data.query.DatabaseType;
 import codes.laivy.data.utils.ObjectsUtils;
+import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,6 +151,10 @@ public class DataAPI {
         return null;
     }
     public static @Nullable ActiveVariable getActiveVariable(@NotNull Receptor receptor, @NotNull String variable) {
+        if (!receptor.isLoaded()) {
+            throw new IllegalStateException("This receptor isn't loaded.");
+        }
+
         if (ACTIVE_VARIABLES.containsKey(receptor)) {
             for (ActiveVariable activeVariable : ACTIVE_VARIABLES.get(receptor)) {
                 if (activeVariable.getVariable().getName().equals(variable)) {
@@ -160,6 +165,10 @@ public class DataAPI {
         return null;
     }
     public static @Nullable InactiveVariable getInactiveVariable(@NotNull Receptor receptor, @NotNull String variable) {
+        if (!receptor.isLoaded()) {
+            throw new IllegalStateException("This receptor isn't loaded.");
+        }
+
         if (INACTIVE_VARIABLES.containsKey(receptor)) {
             for (InactiveVariable inactiveVariable : INACTIVE_VARIABLES.get(receptor)) {
                 if (inactiveVariable.getVariable().equals(variable)) {

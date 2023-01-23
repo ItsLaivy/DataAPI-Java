@@ -4,12 +4,14 @@ import codes.laivy.data.api.Receptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-
+/**
+ * @deprecated Will be removed, use the {@link Receptor#get(String)} & {@link Receptor#set(String, Object)} instead.
+ */
+@Deprecated
 public class VariableValue<T> {
 
-    protected final Receptor receptor;
-    protected final ActiveVariable variable;
+    protected final @NotNull Receptor receptor;
+    protected final @NotNull ActiveVariable variable;
 
     public VariableValue(@NotNull Receptor receptor, @NotNull String name) {
         this(receptor.getActiveVariable(name));
@@ -70,3 +72,4 @@ public class VariableValue<T> {
     }
 
 }
+

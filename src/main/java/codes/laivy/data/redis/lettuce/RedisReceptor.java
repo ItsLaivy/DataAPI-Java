@@ -45,7 +45,7 @@ public class RedisReceptor extends Receptor {
             throw new IllegalStateException("A RedisReceptor with that properties already exists!");
         }
 
-        getDatabase().getDatabaseType().receptorLoad(this);
+        load();
 
         RedisDatabase.RECEPTORS.putIfAbsent(database, new LinkedHashSet<>());
         RedisDatabase.RECEPTORS.get(database).add(this);
@@ -53,6 +53,16 @@ public class RedisReceptor extends Receptor {
         if (getTable() != null) {
             RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).add(this);
         }
+    }
+
+    @Override
+    public void load() {
+        if (isLoaded()) {
+            throw new IllegalStateException("Receptor already loaded");
+        }
+
+        loaded = true;
+        getDatabase().getDatabaseType().receptorLoad(this);
     }
 
     public @Nullable RedisTable getTable() {
@@ -67,11 +77,11 @@ public class RedisReceptor extends Receptor {
     public @NotNull Set<@NotNull String> getRedisKeys() {
         return redisKeys;
     }
-
     @Override
     public @NotNull RedisActiveVariable getActiveVariable(@NotNull String name) {
         return (RedisActiveVariable) super.getActiveVariable(name);
     }
+
     @Override
     public @NotNull RedisActiveVariable[] getActiveVariables() {
         ActiveVariable[] dVars = super.getActiveVariables();
@@ -83,11 +93,11 @@ public class RedisReceptor extends Receptor {
 
         return variables;
     }
-
     @Override
     public @NotNull RedisInactiveVariable getInactiveVariable(@NotNull String name) {
         return (RedisInactiveVariable) super.getInactiveVariable(name);
     }
+
     @Override
     public @NotNull RedisInactiveVariable[] getInactiveVariables() {
         InactiveVariable[] dVars = super.getInactiveVariables();
@@ -125,6 +135,10 @@ public class RedisReceptor extends Receptor {
 
     @Override
     public void save() {
+        if (!isLoaded()) {
+            throw new IllegalStateException("This receptor isn't loaded.");
+        }
+
         getDatabase().getDatabaseType().save(this);
     }
 }

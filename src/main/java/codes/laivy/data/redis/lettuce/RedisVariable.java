@@ -57,9 +57,9 @@ public class RedisVariable extends Variable {
     public @NotNull String getRedisVariableName(@NotNull RedisReceptor receptor) {
         if (ObjectsUtils.equals(receptor.getTable(), getTable())) {
             if (getTable() != null) {
-                return getDatabase().getName() + "_" + getTable().getName() + "_" + getName() + "_" + receptor.getBruteId();
+                return "DataAPI:" + getDatabase().getName() + "_" + getTable().getName() + "_" + getName() + "_" + receptor.getBruteId();
             } else {
-                return getDatabase().getName() + "_" + getName() + "_" + receptor.getBruteId();
+                return "DataAPI:" + getDatabase().getName() + "_" + getName() + "_" + receptor.getBruteId();
             }
         } else {
             throw new IllegalStateException("This receptor's table doesn't matches with the variable's table.");

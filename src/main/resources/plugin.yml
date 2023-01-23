@@ -1,5 +1,5 @@
 name: "DataAPI-Java"
-version: 5.0
+version: ${project.version}
 main: codes.laivy.data.main.BukkitPlugin
 author: "ItsLaivy (DanielZinh#7616)"
 api-version: 1.13
@@ -8,3 +8,5 @@ website: "https://laivy.codes/"
 
 libraries:
   - biz.paluch.redis:lettuce:4.5.0.Final
+  - org.xerial:sqlite-jdbc:3.40.0.0
+  - mysql:mysql-connector-java:8.0.30

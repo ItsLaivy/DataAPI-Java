@@ -107,7 +107,7 @@ public class RedisDatabaseType extends DatabaseType<RedisReceptor, RedisVariable
         for (RedisActiveVariable variable : receptor.getActiveVariables()) {
             String data;
             if (variable.getVariable().isSerialize()) {
-                if (!(variable.getValue() instanceof Serializable)) {
+                if (variable.getValue() != null && !(variable.getValue() instanceof Serializable)) {
                     throw new IllegalArgumentException("The variable is a serializable variable, but the current value isn't a instance of Serializable!");
                 }
 

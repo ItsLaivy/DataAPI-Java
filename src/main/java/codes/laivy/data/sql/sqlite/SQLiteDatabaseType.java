@@ -135,7 +135,7 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
                 String data;
                 if (variable.isSerialize()) {
                     if (!(variable.getDefaultValue() instanceof Serializable)) {
-                        throw new IllegalArgumentException("A opção de serialização está ativada mas o valor padrão não extende Serializable!");
+                        throw new IllegalArgumentException("The serialization option are enabled, but the value isn't a instance of Serializable!");
                     }
 
                     data = Variable.serialize((Serializable) variable.getDefaultValue());
