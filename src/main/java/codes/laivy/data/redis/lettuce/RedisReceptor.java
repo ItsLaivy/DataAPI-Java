@@ -6,10 +6,10 @@ import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
 import codes.laivy.data.redis.lettuce.variables.RedisActiveVariable;
 import codes.laivy.data.redis.lettuce.variables.RedisInactiveVariable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -25,8 +25,6 @@ public class RedisReceptor extends Receptor {
     }
 
     // ---/-/--- //
-
-    private final @NotNull Set<@NotNull String> redisKeys = new HashSet<>();
 
     private final @Nullable RedisTable table;
 
@@ -44,25 +42,31 @@ public class RedisReceptor extends Receptor {
         if (DataAPI.getRedisReceptor(database, bruteId, table) != null) {
             throw new IllegalStateException("A RedisReceptor with that properties already exists!");
         }
-
-        load();
-
-        RedisDatabase.RECEPTORS.putIfAbsent(database, new LinkedHashSet<>());
-        RedisDatabase.RECEPTORS.get(database).add(this);
-
-        if (getTable() != null) {
-            RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).add(this);
-        }
     }
 
     @Override
     public void load() {
-        if (isLoaded()) {
-            throw new IllegalStateException("Receptor already loaded");
+        super.load();
+
+        RedisDatabase.RECEPTORS.putIfAbsent(getDatabase(), new LinkedHashSet<>());
+        RedisDatabase.RECEPTORS.get(getDatabase()).add(this);
+
+        if (getTable() != null) {
+            RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).add(this);
         }
 
         loaded = true;
         getDatabase().getDatabaseType().receptorLoad(this);
+    }
+
+    @Override
+    public void unload(boolean save) {
+        super.unload(save);
+
+        RedisDatabase.RECEPTORS.get(getDatabase()).remove(this);
+        if (getTable() != null) {
+            RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).remove(this);
+        }
     }
 
     public @Nullable RedisTable getTable() {
@@ -74,8 +78,16 @@ public class RedisReceptor extends Receptor {
         return (RedisDatabase) super.getDatabase();
     }
 
+    @ApiStatus.Experimental
     public @NotNull Set<@NotNull String> getRedisKeys() {
-        return redisKeys;
+        String pattern;
+        if (getTable() != null) {
+            pattern = "DataAPI:" + getDatabase().getName() + "_" + getTable().getName() + "_*_" + getBruteId();
+        } else {
+            pattern = "DataAPI:" + getDatabase().getName() + "_*_" + getBruteId();
+        }
+
+        return new LinkedHashSet<>(getDatabase().getDatabaseType().getConnection().sync().keys(pattern));
     }
     @Override
     public @NotNull RedisActiveVariable getActiveVariable(@NotNull String name) {
@@ -111,18 +123,13 @@ public class RedisReceptor extends Receptor {
     }
 
     @Override
-    public void unload(boolean save) {
-        super.unload(save);
+    public void delete() {
+        super.delete();
+        getDatabase().getDatabaseType().receptorDelete(this);
         RedisDatabase.RECEPTORS.get(getDatabase()).remove(this);
         if (getTable() != null) {
             RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).remove(this);
         }
-    }
-
-    @Override
-    public void delete() {
-        unload(false);
-        getDatabase().getDatabaseType().receptorDelete(this);
     }
 
     @Override
@@ -136,7 +143,7 @@ public class RedisReceptor extends Receptor {
     @Override
     public void save() {
         if (!isLoaded()) {
-            throw new IllegalStateException("This receptor isn't loaded.");
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded.");
         }
 
         getDatabase().getDatabaseType().save(this);

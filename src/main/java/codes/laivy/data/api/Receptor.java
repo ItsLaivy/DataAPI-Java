@@ -3,11 +3,9 @@ package codes.laivy.data.api;
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
-import codes.laivy.data.api.variables.VariableValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 public abstract class Receptor {
@@ -20,10 +18,6 @@ public abstract class Receptor {
     protected final @NotNull Database database;
 
     public abstract void save();
-    public abstract void delete();
-
-    public abstract void load();
-
     public abstract void reload();
 
     public Receptor(@NotNull Database database, @NotNull String name, @NotNull String bruteId) {
@@ -31,45 +25,65 @@ public abstract class Receptor {
         this.name = name;
         this.bruteId = bruteId;
 
-        DataAPI.ACTIVE_VARIABLES.putIfAbsent(this, new HashSet<>());
-        DataAPI.INACTIVE_VARIABLES.putIfAbsent(this, new HashSet<>());
-
-        DataAPI.RECEPTORS.putIfAbsent(database, new LinkedHashSet<>());
-        DataAPI.RECEPTORS.get(database).add(this);
+        DataAPI.ACTIVE_VARIABLES.putIfAbsent(this, new LinkedHashSet<>());
+        DataAPI.INACTIVE_VARIABLES.putIfAbsent(this, new LinkedHashSet<>());
     }
 
     public boolean isNew() {
+        if (!isLoaded()) {
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded.");
+        }
+
         return isNew;
     }
+
     public void setNew(boolean isNew) {
         this.isNew = isNew;
     }
-
     public @NotNull String getBruteId() {
         return bruteId;
     }
 
     public @NotNull String getName() {
+        if (!isLoaded()) {
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded.");
+        }
+
         return name;
     }
+
     public void setName(@NotNull String name) {
         this.name = name;
     }
-
     public @NotNull Database getDatabase() {
         return database;
     }
 
-    public void unload(boolean save) {
-        if (!isLoaded()) {
-            throw new IllegalStateException("This receptor isn't loaded.");
+    public void load() {
+        if (isLoaded()) {
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' is already loaded");
         }
 
-        if (save) save();
+        DataAPI.RECEPTORS.putIfAbsent(getDatabase(), new LinkedHashSet<>());
+        DataAPI.RECEPTORS.get(getDatabase()).add(this);
 
-        DataAPI.RECEPTORS.get(database).remove(this);
-        DataAPI.ACTIVE_VARIABLES.remove(this);
-        DataAPI.INACTIVE_VARIABLES.remove(this);
+        DataAPI.ACTIVE_VARIABLES.put(this, new LinkedHashSet<>());
+        DataAPI.INACTIVE_VARIABLES.put(this, new LinkedHashSet<>());
+    }
+
+    public void delete() {
+        unload(false);
+    }
+    public void unload(boolean save) {
+        if (!isLoaded()) {
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded");
+        }
+
+        save();
+
+        DataAPI.RECEPTORS.get(getDatabase()).remove(this);
+        DataAPI.ACTIVE_VARIABLES.get(this).clear();
+        DataAPI.INACTIVE_VARIABLES.get(this).clear();;
 
         loaded = false;
     }
@@ -88,7 +102,7 @@ public abstract class Receptor {
 
     public @NotNull InactiveVariable[] getInactiveVariables() {
         if (!isLoaded()) {
-            throw new IllegalStateException("This receptor isn't loaded.");
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded.");
         }
 
         InactiveVariable[] inactiveVariables = new InactiveVariable[DataAPI.INACTIVE_VARIABLES.get(this).size()];
@@ -101,7 +115,7 @@ public abstract class Receptor {
     }
     public @NotNull ActiveVariable[] getActiveVariables() {
         if (!isLoaded()) {
-            throw new IllegalStateException("This receptor isn't loaded.");
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded.");
         }
 
         ActiveVariable[] activeVariables = new ActiveVariable[DataAPI.ACTIVE_VARIABLES.get(this).size()];

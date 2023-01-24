@@ -17,8 +17,6 @@ public class RedisDatabase extends Database {
     public static final @NotNull Map<@NotNull RedisDatabase, @NotNull Set<@NotNull RedisReceptor>> RECEPTORS = new LinkedHashMap<>();
     public static final @NotNull Map<@NotNull RedisDatabase, @NotNull Set<@NotNull RedisVariable>> VARIABLES = new LinkedHashMap<>();
 
-    private final @NotNull Set<@NotNull String> keys = new LinkedHashSet<>();
-
     public RedisDatabase(@NotNull RedisDatabaseType redisDatabaseType, @NotNull String name) {
         super(redisDatabaseType, name);
     }
@@ -29,14 +27,10 @@ public class RedisDatabase extends Database {
     }
     public void remove(@NotNull String key) {
         key = "DataAPI:" + getName() + "_" + key;
-
-        keys.remove(key);
         getDatabaseType().getConnection().sync().del(key);
     }
     public void set(@NotNull String key, @Nullable Serializable value) {
         key = "DataAPI:" + getName() + "_" + key;
-
-        keys.add(key);
         getDatabaseType().getConnection().sync().set(key, Variable.serialize(value));
     }
     public @Nullable Serializable get(@NotNull String key) {
@@ -45,11 +39,12 @@ public class RedisDatabase extends Database {
         if (getDatabaseType().getConnection().sync().exists(key)) {
             return Variable.unserialize(getDatabaseType().getConnection().sync().get(key));
         }
+
         throw new NullPointerException("Couldn't find this key at the database");
     }
-    @ApiStatus.Internal
+    @ApiStatus.Experimental
     public @NotNull Set<@NotNull String> getKeys() {
-        return keys;
+        return new LinkedHashSet<>(getDatabaseType().getConnection().sync().keys("DataAPI:" + getName() + "_*"));
     }
 
     @Override

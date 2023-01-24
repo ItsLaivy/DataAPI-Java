@@ -28,20 +28,22 @@ public class SQLReceptor extends Receptor {
         if (DataAPI.getSQLReceptor(sqlTable, bruteId) != null) {
             throw new IllegalStateException("A SQLReceptor with that properties already exists!");
         }
-
-        load();
-
-        SQLTable.SQL_RECEPTORS.get(sqlTable).add(this);
     }
 
     @Override
     public void load() {
-        if (isLoaded()) {
-            throw new IllegalStateException("Receptor already loaded");
-        }
+        super.load();
+
+        SQLTable.SQL_RECEPTORS.get(sqlTable).add(this);
 
         loaded = true;
         getDatabase().getDatabaseType().receptorLoad(this);
+    }
+
+    @Override
+    public void unload(boolean save) {
+        super.unload(save);
+        SQLTable.SQL_RECEPTORS.get(getTable()).remove(this);
     }
 
     public @NotNull SQLTable getTable() {
@@ -51,12 +53,6 @@ public class SQLReceptor extends Receptor {
     @Override
     public @NotNull SQLDatabase getDatabase() {
         return (SQLDatabase) super.getDatabase();
-    }
-
-    @Override
-    public void unload(boolean save) {
-        super.unload(save);
-        SQLTable.SQL_RECEPTORS.get(getTable()).remove(this);
     }
 
     @Override
@@ -76,7 +72,7 @@ public class SQLReceptor extends Receptor {
     @Override
     public void save() {
         if (!isLoaded()) {
-            throw new IllegalStateException("This receptor isn't loaded.");
+            throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded.");
         }
 
         getDatabase().getDatabaseType().save(this);

@@ -99,7 +99,6 @@ public class RedisDatabaseType extends DatabaseType<RedisReceptor, RedisVariable
         for (String key : receptor.getRedisKeys()) {
             getConnection().sync().del(key);
         }
-        receptor.getRedisKeys().clear();
     }
 
     @Override
@@ -117,7 +116,6 @@ public class RedisDatabaseType extends DatabaseType<RedisReceptor, RedisVariable
             }
 
             getConnection().sync().set(variable.getRedisVariableName(), data);
-            receptor.getRedisKeys().add(variable.getRedisVariableName());
         }
     }
 

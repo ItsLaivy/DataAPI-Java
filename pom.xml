@@ -62,14 +62,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
-        <dependency>
-            <groupId>org.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <version>3.40.0.0</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -107,7 +99,6 @@
                     <artifactSet>
                         <includes>
                             <include>org.jetbrains:annotations</include>
-                            <include>biz.paluch.redis:lettuce</include>
                         </includes>
                     </artifactSet>
                 </configuration>

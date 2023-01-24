@@ -2,10 +2,7 @@ package codes.laivy.data;
 
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
-import codes.laivy.data.redis.lettuce.RedisDatabase;
-import codes.laivy.data.redis.lettuce.RedisReceptor;
-import codes.laivy.data.redis.lettuce.RedisTable;
-import codes.laivy.data.redis.lettuce.RedisVariable;
+import codes.laivy.data.redis.lettuce.*;
 import codes.laivy.data.sql.SQLReceptor;
 import codes.laivy.data.sql.SQLTable;
 import codes.laivy.data.sql.SQLVariable;
@@ -14,7 +11,6 @@ import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
 import codes.laivy.data.query.DatabaseType;
 import codes.laivy.data.utils.ObjectsUtils;
-import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,9 +84,9 @@ public class DataAPI {
         }
         return receptors;
     }
-    public static @Nullable SQLReceptor getSQLReceptor(@NotNull SQLTable SQLTable, @NotNull String bruteId) {
-        if (SQL_RECEPTORS.containsKey(SQLTable)) {
-            for (SQLReceptor receptor : SQL_RECEPTORS.get(SQLTable)) {
+    public static @Nullable SQLReceptor getSQLReceptor(@NotNull SQLTable sqlTable, @NotNull String bruteId) {
+        if (SQL_RECEPTORS.containsKey(sqlTable)) {
+            for (SQLReceptor receptor : SQL_RECEPTORS.get(sqlTable)) {
                 if (receptor.getBruteId().equals(bruteId)) {
                     return receptor;
                 }
@@ -152,7 +148,7 @@ public class DataAPI {
     }
     public static @Nullable ActiveVariable getActiveVariable(@NotNull Receptor receptor, @NotNull String variable) {
         if (!receptor.isLoaded()) {
-            throw new IllegalStateException("This receptor isn't loaded.");
+            throw new IllegalStateException("This receptor '" + receptor.getBruteId() + "' isn't loaded.");
         }
 
         if (ACTIVE_VARIABLES.containsKey(receptor)) {
@@ -166,7 +162,7 @@ public class DataAPI {
     }
     public static @Nullable InactiveVariable getInactiveVariable(@NotNull Receptor receptor, @NotNull String variable) {
         if (!receptor.isLoaded()) {
-            throw new IllegalStateException("This receptor isn't loaded.");
+            throw new IllegalStateException("This receptor '" + receptor.getBruteId() + "' isn't loaded.");
         }
 
         if (INACTIVE_VARIABLES.containsKey(receptor)) {
