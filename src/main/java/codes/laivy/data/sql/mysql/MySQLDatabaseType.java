@@ -186,7 +186,23 @@ public class MySQLDatabaseType extends SQLDatabaseType {
                     }
                 }
 
-                variable.getDatabase().query("ALTER TABLE `" + variable.getTable().getName() + "` ADD COLUMN `" + variable.getName() + "` MEDIUMTEXT DEFAULT '" + data + "';");
+                // Size
+                String size;
+                if (variable.getSize() == SQLVariable.Size.TINY) {
+                    size = "TINYTEXT";
+                } else if (variable.getSize() == SQLVariable.Size.NORMAL) {
+                    size = "TEXT";
+                } else if (variable.getSize() == SQLVariable.Size.MEDIUM) {
+                    size = "MEDIUMTEXT";
+                } else if (variable.getSize() == SQLVariable.Size.BIG) {
+                    size = "BIGTEXT";
+                } else {
+                    throw new UnsupportedOperationException("Unknown size type '" + variable.getSize().name() + "'");
+                }
+                //
+
+                variable.getDatabase().query("ALTER TABLE `" + variable.getTable().getName() + "` ADD COLUMN `" + variable.getName() + "` " + size + " DEFAULT '" + data + "';");
+                variable.getDatabase().query("ALTER TABLE `" + variable.getTable().getName() + "` MODIFY `" + variable.getName() + "` " + size + " DEFAULT '" + data + "';");
             }
         } catch (Throwable e) {
             throwError(e);

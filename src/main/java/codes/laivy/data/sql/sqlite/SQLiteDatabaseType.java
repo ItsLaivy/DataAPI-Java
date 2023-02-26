@@ -148,6 +148,7 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
                 }
 
                 query((SQLiteDatabase) variable.getTable().getDatabase(), "ALTER TABLE '" + variable.getTable().getName() + "' ADD COLUMN '" + variable.getName() + "' TEXT DEFAULT '" + data + "';");
+                query((SQLiteDatabase) variable.getTable().getDatabase(), "ALTER TABLE '" + variable.getTable().getName() + "' MODIFY COLUMN '" + variable.getName() + "' TEXT DEFAULT '" + data + "';");
             }
         } catch (Throwable e) {
             throwError(e);
