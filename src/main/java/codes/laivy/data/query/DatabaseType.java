@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 
 public abstract class DatabaseType<R extends Receptor, V extends Variable> {
 
@@ -62,7 +61,7 @@ public abstract class DatabaseType<R extends Receptor, V extends Variable> {
     /**
      * It's used when a table needs get saved
      */
-    public abstract void save(@NotNull R receptor);
+    public abstract void receptorSave(@NotNull R receptor);
 
     // Variables
 

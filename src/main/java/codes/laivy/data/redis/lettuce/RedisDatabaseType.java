@@ -91,7 +91,7 @@ public class RedisDatabaseType extends DatabaseType<RedisReceptor, RedisVariable
             }
         }
 
-        save(receptor);
+        receptorSave(receptor);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class RedisDatabaseType extends DatabaseType<RedisReceptor, RedisVariable
     }
 
     @Override
-    public void save(@NotNull RedisReceptor receptor) {
+    public void receptorSave(@NotNull RedisReceptor receptor) {
         for (RedisActiveVariable variable : receptor.getActiveVariables()) {
             String data;
             if (variable.getVariable().isSerialize()) {

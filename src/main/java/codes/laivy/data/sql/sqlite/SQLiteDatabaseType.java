@@ -89,7 +89,7 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
     }
 
     @Override
-    public void save(@NotNull SQLReceptor receptor) {
+    public void receptorSave(@NotNull SQLReceptor receptor) {
         StringBuilder query = new StringBuilder();
         for (ActiveVariable variable : receptor.getActiveVariables()) {
             if (!variable.getVariable().isSaveToDatabase()) {
@@ -97,18 +97,18 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
             }
 
             String data;
-            if (variable.getVariable().isSerialize()) {
-                if (!(variable.getValue() instanceof Serializable)) {
-                    throw new IllegalArgumentException("The variable is a serializable variable, but the current value isn't a instance of Serializable!");
-                }
+            if (variable.getValue() != null) {
+                if (variable.getVariable().isSerialize()) {
+                    if (!(variable.getValue() instanceof Serializable)) {
+                        throw new IllegalArgumentException("The variable is a serializable variable, but the current value isn't a instance of Serializable!");
+                    }
 
-                data = Variable.serialize((Serializable) variable.getValue());
-            } else {
-                if (variable.getValue() != null) {
-                    data = variable.getValue().toString();
+                    data = "'" + Variable.serialize((Serializable) variable.getValue()) + "'";
                 } else {
-                    data = "<!NULL>";
+                    data = "'" + variable.getValue().toString() + "'";
                 }
+            } else {
+                data = "NULL";
             }
 
             query.append("`").append(variable.getVariable().getName()).append("`='").append(data).append("',");
@@ -133,22 +133,22 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
         try {
             if (variable.isSaveToDatabase()) {
                 String data;
-                if (variable.isSerialize()) {
-                    if (!(variable.getDefaultValue() instanceof Serializable)) {
-                        throw new IllegalArgumentException("The serialization option are enabled, but the value isn't a instance of Serializable!");
-                    }
+                if (variable.getDefaultValue() != null) {
+                    if (variable.isSerialize()) {
+                        if (!(variable.getDefaultValue() instanceof Serializable)) {
+                            throw new IllegalArgumentException("The serialization option are enabled, but the value isn't a instance of Serializable!");
+                        }
 
-                    data = Variable.serialize((Serializable) variable.getDefaultValue());
-                } else {
-                    if (variable.getDefaultValue() != null) {
-                        data = variable.getDefaultValue().toString();
+                        data = "'" + Variable.serialize((Serializable) variable.getDefaultValue()) + "'";
                     } else {
-                        data = "<!NULL>";
+                        data = "'" + variable.getDefaultValue().toString() + "'";
                     }
+                } else {
+                    data = "NULL";
                 }
 
-                query((SQLiteDatabase) variable.getTable().getDatabase(), "ALTER TABLE '" + variable.getTable().getName() + "' ADD COLUMN '" + variable.getName() + "' TEXT DEFAULT '" + data + "';");
-                query((SQLiteDatabase) variable.getTable().getDatabase(), "ALTER TABLE '" + variable.getTable().getName() + "' MODIFY COLUMN '" + variable.getName() + "' TEXT DEFAULT '" + data + "';");
+                query((SQLiteDatabase) variable.getTable().getDatabase(), "ALTER TABLE '" + variable.getTable().getName() + "' ADD COLUMN '" + variable.getName() + "' TEXT DEFAULT " + data + ";");
+                query((SQLiteDatabase) variable.getTable().getDatabase(), "ALTER TABLE '" + variable.getTable().getName() + "' MODIFY COLUMN '" + variable.getName() + "' TEXT DEFAULT " + data + ";");
             }
         } catch (Throwable e) {
             throwError(e);

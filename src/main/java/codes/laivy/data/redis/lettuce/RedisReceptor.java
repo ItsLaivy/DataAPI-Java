@@ -146,6 +146,6 @@ public class RedisReceptor extends Receptor {
             throw new IllegalStateException("This receptor '" + getBruteId() + "' isn't loaded.");
         }
 
-        getDatabase().getDatabaseType().save(this);
+        getDatabase().getDatabaseType().receptorSave(this);
     }
 }

@@ -25,10 +25,6 @@ public class ActiveVariable {
     }
 
     protected boolean load() {
-        if (Objects.equals(getValue(), "<!NULL>")) {
-            this.value = null;
-        }
-
         InactiveVariable inactiveVariable = DataAPI.getInactiveVariable(receptor, variable.getName());
         if (inactiveVariable != null) {
             this.value = Variable.unserialize(inactiveVariable.getValue());
