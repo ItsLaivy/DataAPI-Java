@@ -113,7 +113,7 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
 
             query.append("`").append(variable.getVariable().getName()).append("`='").append(data).append("',");
         }
-        query.append("`last_update`='").append(DataAPI.getDate()).append("'");
+        query.append("`last_update`='").append(DataAPI.getDate()).append("', `name`='").append(receptor.getName()).append("'");
 
         query((SQLiteDatabase) receptor.getTable().getDatabase(), "UPDATE '" + receptor.getTable().getName() + "' SET " + query + " WHERE bruteid = '" + receptor.getBruteId() + "'");
     }
