@@ -1,10 +1,12 @@
 package codes.laivy.data.redis.type.lettuce;
 
 import codes.laivy.data.api.Database;
+import codes.laivy.data.api.Receptor;
 import codes.laivy.data.api.Variable;
-import codes.laivy.data.query.DatabaseType;
+import codes.laivy.data.redis.RedisDatabase;
 import codes.laivy.data.redis.RedisVariable;
 import codes.laivy.data.redis.receptor.RedisReceptor;
+import codes.laivy.data.redis.type.RedisDatabaseType;
 import codes.laivy.data.redis.variables.RedisActiveVariable;
 import codes.laivy.data.redis.variables.RedisInactiveVariable;
 import com.lambdaworks.redis.RedisClient;
@@ -12,10 +14,10 @@ import com.lambdaworks.redis.RedisURI;
 import com.lambdaworks.redis.api.StatefulRedisConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,24 +28,19 @@ import java.util.concurrent.TimeUnit;
  *     <li>4.5.0.Final</li>
  * </ul>
  */
-public class RedisLettuceDatabaseType extends DatabaseType<RedisReceptor, RedisVariable> {
+public class RedisLettuceDatabaseType extends RedisDatabaseType {
 
     private final @NotNull RedisClient client;
     private final @NotNull StatefulRedisConnection<String, String> connection;
 
-    private final @NotNull String host;
-    private final int port;
-
     public RedisLettuceDatabaseType(@NotNull String host, int port) {
         this(host, null, 16000, port, false);
     }
-    public RedisLettuceDatabaseType(@NotNull String host, @NotNull String password, int port) {
+    public RedisLettuceDatabaseType(@NotNull String host, @NotNull String password, @Range(from = 0, to = 65535) int port) {
         this(host, password, 16000, port, false);
     }
-    public RedisLettuceDatabaseType(@NotNull String host, @Nullable String password, int timeoutMillis, int port, boolean ssl) {
-        super("REDIS");
-        this.host = host;
-        this.port = port;
+    public RedisLettuceDatabaseType(@NotNull String host, @Nullable String password, @Range(from = 1, to = Integer.MAX_VALUE) int timeoutMillis, @Range(from = 0, to = 65535) int port, boolean ssl) {
+        super("REDIS_LETTUCE", host, password, port);
 
         // RedisClient creator
         RedisURI.Builder builder = RedisURI.builder()
@@ -65,12 +62,9 @@ public class RedisLettuceDatabaseType extends DatabaseType<RedisReceptor, RedisV
         return connection;
     }
 
-    public @NotNull String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
+    @Override
+    public @NotNull RedisDatabase[] getDatabases() {
+        return new RedisDatabase[0];
     }
 
     @Override
@@ -131,6 +125,15 @@ public class RedisLettuceDatabaseType extends DatabaseType<RedisReceptor, RedisV
 
             getConnection().sync().set(variable.getVariable().getRedisVariableName(receptor), data);
         }
+    }
+
+    @Override
+    public @NotNull Receptor[] receptorList() {
+        Set<Receptor> receptors = new LinkedHashSet<>();
+        for (RedisDatabase database : getDatabases()) {
+            receptors.addAll(Arrays.asList(database.getReceptors()));
+        }
+        return receptors.toArray(new Receptor[0]);
     }
 
     @Override

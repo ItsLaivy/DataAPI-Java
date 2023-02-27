@@ -2,6 +2,7 @@ package codes.laivy.data;
 
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
+import codes.laivy.data.api.table.Table;
 import codes.laivy.data.api.table.Tableable;
 import codes.laivy.data.redis.RedisDatabase;
 import codes.laivy.data.redis.RedisTable;
@@ -24,7 +25,7 @@ import static codes.laivy.data.sql.SQLTable.*;
 public class DataAPI {
 
     public static final @NotNull Map<@NotNull DatabaseType<?, ?>, @NotNull Set<@NotNull Database>> DATABASES = new HashMap<>();
-    public static final @NotNull Map<@NotNull Database, @NotNull Set<@NotNull SQLTable>> TABLES = new HashMap<>();
+    public static final @NotNull Map<@NotNull Database, @NotNull Set<@NotNull Table>> TABLES = new HashMap<>();
     public static final @NotNull Map<@NotNull Database, @NotNull Set<@NotNull Variable>> VARIABLES = new HashMap<>();
     public static final @NotNull Map<@NotNull Database, Set<@NotNull Receptor>> RECEPTORS = new HashMap<>();
 
@@ -65,11 +66,11 @@ public class DataAPI {
         return null;
     }
     @Nullable
-    public static SQLTable getTable(@NotNull Database database, @NotNull String name) {
+    public static Table getTable(@NotNull Database database, @NotNull String name) {
         if (TABLES.containsKey(database)) {
-            for (SQLTable SQLTable : TABLES.get(database)) {
-                if (SQLTable.getName().equals(name)) {
-                    return SQLTable;
+            for (Table table : TABLES.get(database)) {
+                if (table.getName().equals(name)) {
+                    return table;
                 }
             }
         }
@@ -86,9 +87,9 @@ public class DataAPI {
         }
         return receptors;
     }
-    public static @Nullable SQLReceptor getSQLReceptor(@NotNull SQLTable sqlTable, @NotNull String bruteId) {
-        if (SQL_RECEPTORS.containsKey(sqlTable)) {
-            for (SQLReceptor receptor : SQL_RECEPTORS.get(sqlTable)) {
+    public static @Nullable SQLReceptor getSQLReceptor(@NotNull SQLTable table, @NotNull String bruteId) {
+        if (SQL_RECEPTORS.containsKey(table)) {
+            for (SQLReceptor receptor : SQL_RECEPTORS.get(table)) {
                 if (receptor.getBruteId().equals(bruteId)) {
                     return receptor;
                 }
@@ -97,14 +98,7 @@ public class DataAPI {
         return null;
     }
     public static @Nullable RedisTable getRedisTable(@NotNull RedisDatabase database, @NotNull String name) {
-        if (RedisDatabase.TABLES.containsKey(database)) {
-            for (RedisTable table : RedisDatabase.TABLES.get(database)) {
-                if (table.getName().equals(name)) {
-                    return table;
-                }
-            }
-        }
-        return null;
+        return (RedisTable) getTable(database, name);
     }
     public static @Nullable Variable getVariable(@NotNull Database database, @NotNull String name) {
         if (VARIABLES.containsKey(database)) {

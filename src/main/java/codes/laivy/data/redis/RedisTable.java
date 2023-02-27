@@ -23,9 +23,6 @@ public class RedisTable extends Table {
             throw new IllegalStateException("A RedisTable with that properties already exists!");
         }
 
-        RedisDatabase.TABLES.putIfAbsent(database, new LinkedHashSet<>());
-        RedisDatabase.TABLES.get(database).add(this);
-
         REDIS_TABLED_VARIABLES.put(this, new LinkedHashSet<>());
         REDIS_TABLED_RECEPTORS.put(this, new LinkedHashSet<>());
     }

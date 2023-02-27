@@ -25,7 +25,6 @@ public class SQLTable extends Table {
 
         database.getDatabaseType().tableLoad(this);
 
-        DataAPI.TABLES.get(database).add(this);
         SQL_VARIABLES.put(this, new HashSet<>());
         SQL_RECEPTORS.put(this, new HashSet<>());
     }

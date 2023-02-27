@@ -4,6 +4,8 @@ import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
 import codes.laivy.data.api.Variable;
+import codes.laivy.data.api.table.Table;
+import codes.laivy.data.redis.type.RedisDatabaseType;
 import codes.laivy.data.redis.type.lettuce.RedisLettuceDatabaseType;
 import codes.laivy.data.redis.receptor.RedisReceptor;
 import org.jetbrains.annotations.ApiStatus;
@@ -15,12 +17,11 @@ import java.util.*;
 
 public class RedisDatabase extends Database {
 
-    public static final @NotNull Map<@NotNull RedisDatabase, @NotNull Set<@NotNull RedisTable>> TABLES = new LinkedHashMap<>();
     public static final @NotNull Map<@NotNull RedisDatabase, @NotNull Set<@NotNull RedisReceptor>> RECEPTORS = new LinkedHashMap<>();
     public static final @NotNull Map<@NotNull RedisDatabase, @NotNull Set<@NotNull RedisVariable>> VARIABLES = new LinkedHashMap<>();
 
-    public RedisDatabase(@NotNull RedisLettuceDatabaseType redisLettuceDatabaseType, @NotNull String name) {
-        super(redisLettuceDatabaseType, name);
+    public RedisDatabase(@NotNull RedisDatabaseType redisDatabaseType, @NotNull String name) {
+        super(redisDatabaseType, name);
     }
 
     public boolean has(@NotNull String key) {
@@ -50,22 +51,35 @@ public class RedisDatabase extends Database {
     }
 
     @Override
-    public @NotNull RedisVariable[] getVariables() {
-        List<Variable> dVars = new LinkedList<>(DataAPI.VARIABLES.get(this));
-        RedisVariable[] variables = new RedisVariable[dVars.size()];
-        for (int row = 0; row < dVars.size(); row++) {
-            variables[row] = (RedisVariable) dVars.get(row);
+    public @NotNull RedisReceptor[] getAllReceptors() {
+        Set<RedisReceptor> receptors = new LinkedHashSet<>();
+        for (Receptor receptor : super.getAllReceptors()) {
+            receptors.add((RedisReceptor) receptor);
         }
-        return variables;
+        return receptors.toArray(new RedisReceptor[0]);
+    }
+    public RedisTable[] getTables() {
+        Set<RedisTable> tables = new LinkedHashSet<>();
+        for (Table table : DataAPI.TABLES.get(this)) {
+            tables.add((RedisTable) table);
+        }
+        return tables.toArray(new RedisTable[0]);
+    }
+    @Override
+    public @NotNull RedisVariable[] getVariables() {
+        Set<RedisVariable> receptors = new LinkedHashSet<>();
+        for (Variable variable : DataAPI.VARIABLES.get(this)) {
+            receptors.add((RedisVariable) variable);
+        }
+        return receptors.toArray(new RedisVariable[0]);
     }
     @Override
     public @NotNull RedisReceptor[] getReceptors() {
-        List<Receptor> dVars = new LinkedList<>(DataAPI.RECEPTORS.get(this));
-        RedisReceptor[] receptors = new RedisReceptor[dVars.size()];
-        for (int row = 0; row < dVars.size(); row++) {
-            receptors[row] = (RedisReceptor) dVars.get(row);
+        Set<RedisReceptor> receptors = new LinkedHashSet<>();
+        for (Receptor receptor : DataAPI.RECEPTORS.get(this)) {
+            receptors.add((RedisReceptor) receptor);
         }
-        return receptors;
+        return receptors.toArray(new RedisReceptor[0]);
     }
 
     @Override

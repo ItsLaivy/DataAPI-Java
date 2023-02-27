@@ -6,8 +6,6 @@ import codes.laivy.data.api.Variable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 public class ActiveVariable {
 
     protected final @NotNull Receptor receptor;

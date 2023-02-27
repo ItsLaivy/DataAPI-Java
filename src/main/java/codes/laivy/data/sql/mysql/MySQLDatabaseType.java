@@ -2,6 +2,7 @@ package codes.laivy.data.sql.mysql;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Database;
+import codes.laivy.data.api.Receptor;
 import codes.laivy.data.sql.*;
 import codes.laivy.data.api.Variable;
 import codes.laivy.data.api.variables.ActiveVariable;
@@ -170,6 +171,39 @@ public class MySQLDatabaseType extends SQLDatabaseType {
         receptor.getDatabase().query("UPDATE `" + receptor.getTable().getName() + "` SET " + query + " WHERE bruteid = '" + receptor.getBruteId() + "'");
     }
 
+    public @NotNull MySQLDatabase[] getDatabases() {
+        Set<MySQLDatabase> databases = new LinkedHashSet<>();
+        for (@NotNull Database database : DataAPI.DATABASES.get(this)) {
+            databases.add((MySQLDatabase) database);
+        }
+        return databases.toArray(new MySQLDatabase[0]);
+    }
+
+    @Override
+    public @NotNull Receptor[] receptorList() {
+        Set<Receptor> receptors = new LinkedHashSet<>();
+        for (SQLTable table : getTables()) {
+            MySQLResult query = (MySQLResult) table.getDatabase().query("SELECT `name`,`bruteid` FROM `" + table.getName() + "`");
+            Set<Map<String, Object>> data = query.results();
+            query.close();
+
+            f1:
+            for (Map<String, Object> map : data) {
+                String name = (String) map.get("name");
+                String bruteId = (String) map.get("bruteid");
+
+                for (SQLReceptor receptor : SQLTable.SQL_RECEPTORS.get(table)) {
+                    if (receptor.getBruteId().equals(bruteId)) {
+                        receptors.add(receptor);
+                        continue f1;
+                    }
+                }
+                receptors.add(new SQLReceptor(table, name, bruteId));
+            }
+        }
+        return receptors.toArray(new Receptor[0]);
+    }
+
     @Override
     public void tableLoad(@NotNull SQLTable table) {
         table.getDatabase().query("CREATE TABLE `" + table.getName() + "` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(128), bruteid VARCHAR(128), last_update VARCHAR(21));");
@@ -243,4 +277,5 @@ public class MySQLDatabaseType extends SQLDatabaseType {
     public void databaseDelete(@NotNull Database database) {
         query("DROP DATABASE `" + database.getName() + "`").execute();
     }
+
 }

@@ -1,5 +1,6 @@
 package codes.laivy.data.api.table;
 
+import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
 import codes.laivy.data.api.Variable;
@@ -18,6 +19,8 @@ public abstract class Table {
     public Table(@NotNull Database database, @NotNull String name) {
         this.name = name;
         this.database = database;
+
+        DataAPI.TABLES.get(database).add(this);
     }
 
     public @NotNull String getName() {

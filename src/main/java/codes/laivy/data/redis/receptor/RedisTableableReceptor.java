@@ -30,6 +30,13 @@ public class RedisTableableReceptor extends RedisReceptor implements Tableable {
     }
 
     @Override
+    @ApiStatus.Experimental
+    public @NotNull Set<@NotNull String> getRedisKeys() {
+        String pattern = "DataAPI:" + getDatabase().getName() + "_" + getTable().getName() + "_*_" + getBruteId();
+        return new LinkedHashSet<>(getDatabase().getDatabaseType().getConnection().sync().keys(pattern));
+    }
+
+    @Override
     public @NotNull RedisTable getTable() {
         return table;
     }
@@ -44,12 +51,6 @@ public class RedisTableableReceptor extends RedisReceptor implements Tableable {
     public void unload(boolean save) {
         super.unload(save);
         RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).remove(this);
-    }
-
-    @ApiStatus.Experimental
-    public @NotNull Set<@NotNull String> getRedisKeys() {
-        String pattern = "DataAPI:" + getDatabase().getName() + "_" + getTable().getName() + "_*_" + getBruteId();
-        return new LinkedHashSet<>(getDatabase().getDatabaseType().getConnection().sync().keys(pattern));
     }
 
     @Override

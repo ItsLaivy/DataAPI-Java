@@ -2,6 +2,7 @@ package codes.laivy.data.sql.sqlite;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Database;
+import codes.laivy.data.api.Receptor;
 import codes.laivy.data.sql.*;
 import codes.laivy.data.api.Variable;
 import codes.laivy.data.api.variables.ActiveVariable;
@@ -11,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.Serializable;
 import java.sql.DriverManager;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SQLiteDatabaseType extends SQLDatabaseType {
 
@@ -132,6 +130,31 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
     }
 
     @Override
+    public @NotNull Receptor[] receptorList() {
+        Set<Receptor> receptors = new LinkedHashSet<>();
+        for (SQLTable table : getTables()) {
+            SQLiteResult query = (SQLiteResult) table.getDatabase().query("SELECT 'name','bruteid' FROM '" + table.getName() + "'");
+            Set<Map<String, Object>> data = query.results();
+            query.close();
+
+            f1:
+            for (Map<String, Object> map : data) {
+                String name = (String) map.get("name");
+                String bruteId = (String) map.get("bruteid");
+
+                for (SQLReceptor receptor : SQLTable.SQL_RECEPTORS.get(table)) {
+                    if (receptor.getBruteId().equals(bruteId)) {
+                        receptors.add(receptor);
+                        continue f1;
+                    }
+                }
+                receptors.add(new SQLReceptor(table, name, bruteId));
+            }
+        }
+        return receptors.toArray(new Receptor[0]);
+    }
+
+    @Override
     public void tableLoad(@NotNull SQLTable SQLTable) {
         query((SQLiteDatabase) SQLTable.getDatabase(), "CREATE TABLE '" + SQLTable.getName() + "' ('id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT, bruteid TEXT, 'last_update' TEXT);");
     }
@@ -139,6 +162,14 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
     @Override
     public void tableDelete(@NotNull SQLTable SQLTable) {
         query((SQLiteDatabase) SQLTable.getDatabase(), "DROP TABLE '" + SQLTable.getName() + "'");
+    }
+
+    public @NotNull SQLiteDatabase[] getDatabases() {
+        Set<SQLiteDatabase> databases = new LinkedHashSet<>();
+        for (@NotNull Database database : DataAPI.DATABASES.get(this)) {
+            databases.add((SQLiteDatabase) database);
+        }
+        return databases.toArray(new SQLiteDatabase[0]);
     }
 
     @Override

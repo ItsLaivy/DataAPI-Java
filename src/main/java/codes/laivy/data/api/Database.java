@@ -1,14 +1,12 @@
 package codes.laivy.data.api;
 
 import codes.laivy.data.DataAPI;
+import codes.laivy.data.api.table.Table;
 import codes.laivy.data.query.DatabaseType;
-import codes.laivy.data.sql.SQLTable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.Set;
 
 public abstract class Database {
 
@@ -31,11 +29,21 @@ public abstract class Database {
         DataAPI.RECEPTORS.put(this, new LinkedHashSet<>());
     }
 
+    public @NotNull Table[] getTables() {
+        return DataAPI.TABLES.get(this).toArray(new Table[0]);
+    }
     public @NotNull Variable[] getVariables() {
         return new LinkedHashSet<>(DataAPI.VARIABLES.get(this)).toArray(new Variable[0]);
     }
     public @NotNull Receptor[] getReceptors() {
         return new LinkedHashSet<>(DataAPI.RECEPTORS.get(this)).toArray(new Receptor[0]);
+    }
+
+    /**
+     * @return A Set containing all receptors (unloaded and loaded) from this database
+     */
+    public @NotNull Receptor[] getAllReceptors() {
+        return getDatabaseType().receptorList();
     }
 
     @NotNull
@@ -48,20 +56,10 @@ public abstract class Database {
     }
 
     public void delete() {
-        for (SQLTable SQLTable : getTables()) {
-            SQLTable.delete();
+        for (Table table : getTables()) {
+            table.delete();
         }
         getDatabaseType().databaseDelete(this);
-    }
-
-    public SQLTable[] getTables() {
-        SQLTable[] SQLTables = new SQLTable[DataAPI.TABLES.get(this).size()];
-        int row = 0;
-        for (SQLTable SQLTable : DataAPI.TABLES.get(this)) {
-            SQLTables[row] = SQLTable;
-            row++;
-        }
-        return SQLTables;
     }
 
     @Override

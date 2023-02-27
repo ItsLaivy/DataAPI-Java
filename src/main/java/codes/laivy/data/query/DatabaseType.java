@@ -16,7 +16,6 @@ public abstract class DatabaseType<R extends Receptor, V extends Variable> {
 
     public DatabaseType(@NotNull String name) {
         this.name = name;
-
         DataAPI.DATABASES.putIfAbsent(this, new HashSet<>());
     }
 
@@ -26,7 +25,7 @@ public abstract class DatabaseType<R extends Receptor, V extends Variable> {
     }
 
     public void throwError(Throwable throwable) throws RuntimeException {
-        if (DataAPI.DEBUG) System.out.println("Possible code error: '" + throwable.getClass() + "' - '" + throwable.getMessage() + "'");;
+        if (DataAPI.DEBUG) System.out.println("Possible code error: '" + throwable.getClass() + "' - '" + throwable.getMessage() + "'");
 
         for (String str : suppressedErrors()) {
             if (throwable.getMessage().contains(str)) {
@@ -63,6 +62,11 @@ public abstract class DatabaseType<R extends Receptor, V extends Variable> {
      */
     public abstract void receptorSave(@NotNull R receptor);
 
+    /**
+     * Gets all receptors instances stored at the database (doesn't loads it)
+     */
+    public abstract @NotNull Receptor[] receptorList();
+
     // Variables
 
     /**
@@ -84,4 +88,9 @@ public abstract class DatabaseType<R extends Receptor, V extends Variable> {
      * It's used to delete a database
      */
     public abstract void databaseDelete(@NotNull Database database);
+
+    /**
+     * @return all databases of this type
+     */
+    public abstract @NotNull Database[] getDatabases();
 }
