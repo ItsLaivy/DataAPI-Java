@@ -1,5 +1,8 @@
-package codes.laivy.data.api;
+package codes.laivy.data.api.table;
 
+import codes.laivy.data.api.Database;
+import codes.laivy.data.api.Receptor;
+import codes.laivy.data.api.Variable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class Table {

@@ -1,10 +1,10 @@
-package codes.laivy.data.redis.lettuce.variables;
+package codes.laivy.data.redis.variables;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Variable;
 import codes.laivy.data.api.variables.InactiveVariable;
-import codes.laivy.data.redis.lettuce.RedisReceptor;
-import codes.laivy.data.redis.lettuce.RedisVariable;
+import codes.laivy.data.redis.receptor.RedisReceptor;
+import codes.laivy.data.redis.RedisVariable;
 import org.jetbrains.annotations.NotNull;
 
 public class RedisInactiveVariable extends InactiveVariable {

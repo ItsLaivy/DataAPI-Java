@@ -18,7 +18,6 @@ public abstract class Receptor {
     protected final @NotNull Database database;
 
     public abstract void save();
-    public abstract void reload();
 
     public Receptor(@NotNull Database database, @NotNull String name, @NotNull String bruteId) {
         this.database = database;
@@ -27,6 +26,12 @@ public abstract class Receptor {
 
         DataAPI.ACTIVE_VARIABLES.putIfAbsent(this, new LinkedHashSet<>());
         DataAPI.INACTIVE_VARIABLES.putIfAbsent(this, new LinkedHashSet<>());
+    }
+
+    public void reload(boolean save) {
+        if (isLoaded()) {
+            unload(save);
+        } load();
     }
 
     public boolean isNew() {

@@ -2,6 +2,7 @@ package codes.laivy.data.sql;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Variable;
+import codes.laivy.data.api.table.Tableable;
 import codes.laivy.data.api.variables.ActiveVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.Range;
 
 import java.util.Objects;
 
-public class SQLVariable extends Variable {
+public class SQLVariable extends Variable implements Tableable {
 
     /**
      * That's the size (in bytes) a variable can store.
@@ -53,31 +54,31 @@ public class SQLVariable extends Variable {
         }
     }
 
-    private final @NotNull SQLTable sqlTable;
+    private final @NotNull SQLTable table;
     private final @NotNull Size size;
 
-    public SQLVariable(@NotNull String name, @NotNull SQLTable sqlTable, @Nullable Object defaultValue) {
-        this(name, sqlTable, defaultValue, true, true);
+    public SQLVariable(@NotNull String name, @NotNull SQLTable table, @Nullable Object defaultValue) {
+        this(name, table, defaultValue, true, true);
     }
 
-    public SQLVariable(@NotNull String name, @NotNull SQLTable sqlTable, @Nullable Object defaultValue, boolean serialize, boolean saveToDatabase) {
-        this(Size.MEDIUM, name, sqlTable, defaultValue, serialize, saveToDatabase);
+    public SQLVariable(@NotNull String name, @NotNull SQLTable table, @Nullable Object defaultValue, boolean serialize, boolean saveToDatabase) {
+        this(Size.MEDIUM, name, table, defaultValue, serialize, saveToDatabase);
     }
-    public SQLVariable(@NotNull Size size, @NotNull String name, @NotNull SQLTable sqlTable, @Nullable Object defaultValue, boolean serialize, boolean saveToDatabase) {
-        super(name, sqlTable.getDatabase(), defaultValue, serialize, saveToDatabase);
-        this.sqlTable = sqlTable;
+    public SQLVariable(@NotNull Size size, @NotNull String name, @NotNull SQLTable table, @Nullable Object defaultValue, boolean serialize, boolean saveToDatabase) {
+        super(name, table.getDatabase(), defaultValue, serialize, saveToDatabase);
+        this.table = table;
         this.size = size;
 
-        if (DataAPI.getSQLVariable(sqlTable, name) != null) {
+        if (DataAPI.getSQLVariable(table, name) != null) {
             if (DataAPI.EXISTS_ERROR) throw new IllegalStateException("A variable named '" + name + "' at the table '" + getTable().getName() + "' in the database '" + getTable().getDatabase().getName() + " ('" + getTable().getDatabase().getDatabaseType().getName() + "')' already exists!");
             return;
         }
 
         getDatabase().getDatabaseType().variableLoad(this);
 
-        SQLTable.SQL_VARIABLES.get(sqlTable).add(this);
+        SQLTable.SQL_VARIABLES.get(table).add(this);
 
-        for (SQLReceptor receptor : SQLTable.SQL_RECEPTORS.get(sqlTable)) {
+        for (SQLReceptor receptor : SQLTable.SQL_RECEPTORS.get(table)) {
             new ActiveVariable(this, receptor, defaultValue);
         }
     }
@@ -102,7 +103,7 @@ public class SQLVariable extends Variable {
     }
 
     public @NotNull SQLTable getTable() {
-        return sqlTable;
+        return table;
     }
 
     @Override
@@ -110,11 +111,11 @@ public class SQLVariable extends Variable {
         if (this == o) return true;
         if (!(o instanceof SQLVariable)) return false;
         SQLVariable that = (SQLVariable) o;
-        return sqlTable.equals(that.sqlTable) && getName().equals(that.getName());
+        return table.equals(that.table) && getName().equals(that.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sqlTable, getName());
+        return Objects.hash(table, getName());
     }
 }

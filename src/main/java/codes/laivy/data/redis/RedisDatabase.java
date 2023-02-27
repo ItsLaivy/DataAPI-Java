@@ -1,9 +1,11 @@
-package codes.laivy.data.redis.lettuce;
+package codes.laivy.data.redis;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
 import codes.laivy.data.api.Variable;
+import codes.laivy.data.redis.lettuce.RedisLettuceDatabaseType;
+import codes.laivy.data.redis.receptor.RedisReceptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +19,8 @@ public class RedisDatabase extends Database {
     public static final @NotNull Map<@NotNull RedisDatabase, @NotNull Set<@NotNull RedisReceptor>> RECEPTORS = new LinkedHashMap<>();
     public static final @NotNull Map<@NotNull RedisDatabase, @NotNull Set<@NotNull RedisVariable>> VARIABLES = new LinkedHashMap<>();
 
-    public RedisDatabase(@NotNull RedisDatabaseType redisDatabaseType, @NotNull String name) {
-        super(redisDatabaseType, name);
+    public RedisDatabase(@NotNull RedisLettuceDatabaseType redisLettuceDatabaseType, @NotNull String name) {
+        super(redisLettuceDatabaseType, name);
     }
 
     public boolean has(@NotNull String key) {
@@ -67,8 +69,8 @@ public class RedisDatabase extends Database {
     }
 
     @Override
-    public @NotNull RedisDatabaseType getDatabaseType() {
-        return (RedisDatabaseType) super.getDatabaseType();
+    public @NotNull RedisLettuceDatabaseType getDatabaseType() {
+        return (RedisLettuceDatabaseType) super.getDatabaseType();
     }
 
     public @NotNull Set<@NotNull String> getDatabaseKeys() {

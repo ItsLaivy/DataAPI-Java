@@ -1,47 +1,38 @@
-package codes.laivy.data.redis.lettuce;
+package codes.laivy.data.redis.receptor;
 
-import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Receptor;
+import codes.laivy.data.api.table.Tableable;
 import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
-import codes.laivy.data.redis.lettuce.variables.RedisActiveVariable;
-import codes.laivy.data.redis.lettuce.variables.RedisInactiveVariable;
+import codes.laivy.data.redis.RedisVariable;
+import codes.laivy.data.redis.RedisDatabase;
+import codes.laivy.data.redis.variables.RedisActiveVariable;
+import codes.laivy.data.redis.variables.RedisInactiveVariable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class RedisReceptor extends Receptor {
 
-    public static @NotNull RedisReceptor getCreateReceptor(@NotNull RedisDatabase database, @NotNull String name, @NotNull String bruteId, @Nullable RedisTable table) {
-        RedisReceptor receptor;
-        if ((receptor = DataAPI.getRedisReceptor(database, bruteId, table)) != null) {
-            return receptor;
-        } else {
-            return new RedisReceptor(database, name, bruteId, table);
-        }
-    }
-
-    // ---/-/--- //
-
-    private final @Nullable RedisTable table;
-
     public RedisReceptor(@NotNull RedisDatabase database, @NotNull String name, @NotNull String bruteId) {
-        this(database, name, bruteId, null);
-    }
-    public RedisReceptor(@NotNull RedisDatabase database, @NotNull String name, @NotNull String bruteId, @Nullable RedisTable table) {
         super(database, name, bruteId);
+    }
 
-        this.table = table;
-        if (getTable() != null && !getTable().getDatabase().equals(database)) {
-            throw new IllegalArgumentException("This table's database needs to be the same of the receptor's database!");
+    /**
+     * Returns all the redis variables that matches with that receptor
+     * @return the redis variables of that receptor
+     */
+    public @NotNull RedisVariable[] getVariables() {
+        Set<RedisVariable> variables = new LinkedHashSet<>();
+        for (RedisVariable variable : RedisDatabase.VARIABLES.get(getDatabase())) {
+            if (variable instanceof Tableable) {
+                continue;
+            }
+            variables.add(variable);
         }
-
-        if (DataAPI.getRedisReceptor(database, bruteId, table) != null) {
-            throw new IllegalStateException("A RedisReceptor with that properties already exists!");
-        }
+        return variables.toArray(new RedisVariable[0]);
     }
 
     @Override
@@ -51,10 +42,6 @@ public class RedisReceptor extends Receptor {
         RedisDatabase.RECEPTORS.putIfAbsent(getDatabase(), new LinkedHashSet<>());
         RedisDatabase.RECEPTORS.get(getDatabase()).add(this);
 
-        if (getTable() != null) {
-            RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).add(this);
-        }
-
         loaded = true;
         getDatabase().getDatabaseType().receptorLoad(this);
     }
@@ -62,15 +49,7 @@ public class RedisReceptor extends Receptor {
     @Override
     public void unload(boolean save) {
         super.unload(save);
-
         RedisDatabase.RECEPTORS.get(getDatabase()).remove(this);
-        if (getTable() != null) {
-            RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).remove(this);
-        }
-    }
-
-    public @Nullable RedisTable getTable() {
-        return table;
     }
 
     @Override
@@ -80,13 +59,7 @@ public class RedisReceptor extends Receptor {
 
     @ApiStatus.Experimental
     public @NotNull Set<@NotNull String> getRedisKeys() {
-        String pattern;
-        if (getTable() != null) {
-            pattern = "DataAPI:" + getDatabase().getName() + "_" + getTable().getName() + "_*_" + getBruteId();
-        } else {
-            pattern = "DataAPI:" + getDatabase().getName() + "_*_" + getBruteId();
-        }
-
+        String pattern = "DataAPI:" + getDatabase().getName() + "_*_" + getBruteId();
         return new LinkedHashSet<>(getDatabase().getDatabaseType().getConnection().sync().keys(pattern));
     }
     @Override
@@ -127,17 +100,6 @@ public class RedisReceptor extends Receptor {
         super.delete();
         getDatabase().getDatabaseType().receptorDelete(this);
         RedisDatabase.RECEPTORS.get(getDatabase()).remove(this);
-        if (getTable() != null) {
-            RedisTable.REDIS_TABLED_RECEPTORS.get(getTable()).remove(this);
-        }
-    }
-
-    @Override
-    public void reload() {
-        DataAPI.ACTIVE_VARIABLES.put(this, new LinkedHashSet<>());
-        DataAPI.INACTIVE_VARIABLES.put(this, new LinkedHashSet<>());
-
-        getDatabase().getDatabaseType().receptorLoad(this);
     }
 
     @Override

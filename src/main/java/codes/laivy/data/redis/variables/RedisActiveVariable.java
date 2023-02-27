@@ -1,8 +1,8 @@
-package codes.laivy.data.redis.lettuce.variables;
+package codes.laivy.data.redis.variables;
 
 import codes.laivy.data.api.variables.ActiveVariable;
-import codes.laivy.data.redis.lettuce.RedisReceptor;
-import codes.laivy.data.redis.lettuce.RedisVariable;
+import codes.laivy.data.redis.receptor.RedisReceptor;
+import codes.laivy.data.redis.RedisVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +19,5 @@ public class RedisActiveVariable extends ActiveVariable {
     @Override
     public @NotNull RedisReceptor getReceptor() {
         return (RedisReceptor) super.getReceptor();
-    }
-
-    public @NotNull String getRedisVariableName() {
-        return getVariable().getRedisVariableName(getReceptor());
     }
 }

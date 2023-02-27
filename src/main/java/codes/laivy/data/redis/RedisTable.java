@@ -1,9 +1,10 @@
-package codes.laivy.data.redis.lettuce;
+package codes.laivy.data.redis;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Receptor;
-import codes.laivy.data.api.Table;
+import codes.laivy.data.api.table.Table;
 import codes.laivy.data.api.Variable;
+import codes.laivy.data.redis.receptor.RedisReceptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

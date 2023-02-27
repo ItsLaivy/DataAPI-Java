@@ -2,7 +2,7 @@ package codes.laivy.data.sql;
 
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Receptor;
-import codes.laivy.data.api.Table;
+import codes.laivy.data.api.table.Table;
 import codes.laivy.data.api.Variable;
 import org.jetbrains.annotations.NotNull;
 

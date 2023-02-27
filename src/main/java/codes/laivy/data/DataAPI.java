@@ -2,7 +2,10 @@ package codes.laivy.data;
 
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
-import codes.laivy.data.redis.lettuce.*;
+import codes.laivy.data.api.table.Tableable;
+import codes.laivy.data.redis.RedisDatabase;
+import codes.laivy.data.redis.RedisTable;
+import codes.laivy.data.redis.RedisVariable;
 import codes.laivy.data.sql.SQLReceptor;
 import codes.laivy.data.sql.SQLTable;
 import codes.laivy.data.sql.SQLVariable;
@@ -10,7 +13,6 @@ import codes.laivy.data.api.Variable;
 import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
 import codes.laivy.data.query.DatabaseType;
-import codes.laivy.data.utils.ObjectsUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,18 +96,6 @@ public class DataAPI {
         }
         return null;
     }
-    public static @Nullable RedisReceptor getRedisReceptor(@NotNull RedisDatabase database, @NotNull String bruteId, @Nullable RedisTable table) {
-        if (RedisDatabase.RECEPTORS.containsKey(database)) {
-            for (RedisReceptor receptor : RedisDatabase.RECEPTORS.get(database)) {
-                if (receptor.getBruteId().equals(bruteId)) {
-                    if (ObjectsUtils.equals(receptor.getTable(), table)) {
-                        return receptor;
-                    }
-                }
-            }
-        }
-        return null;
-    }
     public static @Nullable RedisTable getRedisTable(@NotNull RedisDatabase database, @NotNull String name) {
         if (RedisDatabase.TABLES.containsKey(database)) {
             for (RedisTable table : RedisDatabase.TABLES.get(database)) {
@@ -136,10 +126,14 @@ public class DataAPI {
         }
         return null;
     }
-    public static @Nullable RedisVariable getRedisVariable(@NotNull RedisDatabase database, @NotNull String name) {
+    public static @Nullable RedisVariable getRedisVariable(@NotNull RedisDatabase database, @NotNull String name, @Nullable RedisTable table) {
         if (RedisDatabase.VARIABLES.containsKey(database)) {
             for (RedisVariable variable : RedisDatabase.VARIABLES.get(database)) {
                 if (variable.getName().equals(name)) {
+                    if (!(table != null && variable instanceof Tableable && ((Tableable) variable).getTable().equals(table))) {
+                        continue;
+                    }
+
                     return variable;
                 }
             }
