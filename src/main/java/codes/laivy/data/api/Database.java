@@ -6,7 +6,9 @@ import codes.laivy.data.sql.SQLTable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public abstract class Database {
 
@@ -25,16 +27,15 @@ public abstract class Database {
         getDatabaseType().databaseLoad(this);
 
         DataAPI.DATABASES.get(databaseType).add(this);
-        DataAPI.TABLES.put(this, new HashSet<>());
+        DataAPI.TABLES.put(this, new LinkedHashSet<>());
+        DataAPI.RECEPTORS.put(this, new LinkedHashSet<>());
     }
 
     public @NotNull Variable[] getVariables() {
-        //noinspection ConstantConditions
-        return (Variable[]) DataAPI.VARIABLES.get(this).toArray();
+        return new LinkedHashSet<>(DataAPI.VARIABLES.get(this)).toArray(new Variable[0]);
     }
     public @NotNull Receptor[] getReceptors() {
-        //noinspection ConstantConditions
-        return (Receptor[]) DataAPI.RECEPTORS.get(this).toArray();
+        return new LinkedHashSet<>(DataAPI.RECEPTORS.get(this)).toArray(new Receptor[0]);
     }
 
     @NotNull

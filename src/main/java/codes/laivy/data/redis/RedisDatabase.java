@@ -4,7 +4,7 @@ import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
 import codes.laivy.data.api.Variable;
-import codes.laivy.data.redis.lettuce.RedisLettuceDatabaseType;
+import codes.laivy.data.redis.type.lettuce.RedisLettuceDatabaseType;
 import codes.laivy.data.redis.receptor.RedisReceptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

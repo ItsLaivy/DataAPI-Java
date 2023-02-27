@@ -44,7 +44,7 @@ public abstract class DatabaseType<R extends Receptor, V extends Variable> {
      * @return this Map needs to return a Map. (key = variable name) e (value = serializaded value)
      */
     @NotNull
-    public abstract Map<String, String> data(@NotNull R receptor);
+    public abstract Map<String, Object> receptorData(@NotNull R receptor);
 
     /**
      * It's called when a receptor needs to be loaded

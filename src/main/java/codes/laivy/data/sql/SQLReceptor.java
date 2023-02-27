@@ -3,11 +3,13 @@ package codes.laivy.data.sql;
 import codes.laivy.data.DataAPI;
 import codes.laivy.data.api.Receptor;
 import codes.laivy.data.api.table.Tableable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class SQLReceptor extends Receptor implements Tableable {
 
     private final @NotNull SQLTable table;
+    private int id;
 
     public SQLReceptor(@NotNull SQLTable table, @NotNull String name, @NotNull String bruteId) {
         super(table.getDatabase(), name, bruteId);
@@ -32,6 +34,19 @@ public class SQLReceptor extends Receptor implements Tableable {
     public void unload(boolean save) {
         super.unload(save);
         SQLTable.SQL_RECEPTORS.get(getTable()).remove(this);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    /**
+     * Only use that method if you are absolutely convinced of what are you doing. This will change the natural order of the AUTO_INCREMENT attribute.
+     * @param id the new receptor's id
+     */
+    @ApiStatus.Internal
+    public void setId(int id) {
+        this.id = id;
     }
 
     @Override

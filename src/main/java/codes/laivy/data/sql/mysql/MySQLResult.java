@@ -6,10 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class MySQLResult extends DataResult {
 
@@ -37,28 +34,36 @@ public class MySQLResult extends DataResult {
     }
 
     @Override
-    public @NotNull Map<String, String> results() {
+    public @NotNull Set<Map<String, Object>> results() {
         if (result != null) {
             try {
-                Map<String, String> map = new LinkedHashMap<>();
-                result.next();
-
-                if (result.getObject(1) == null) {
-                    return map;
+                if (result.isClosed()) {
+                    throw new IllegalStateException("The result set is closed");
                 }
 
-                for (int row = 1; row <= result.getMetaData().getColumnCount(); row++) {
-                    map.put(result.getMetaData().getColumnName(row), result.getString(row));
+                Set<Map<String, Object>> set = new LinkedHashSet<>();
+                while (result.next()) {
+                    Map<String, Object> map = new LinkedHashMap<>();
+
+                    if (result.getObject(1) == null) {
+                        continue;
+                    }
+
+                    for (int row = 1; row <= result.getMetaData().getColumnCount(); row++) {
+                        map.put(result.getMetaData().getColumnName(row), result.getObject(row));
+                    }
+
+                    set.add(map);
                 }
-                return map;
+                return set;
             } catch (SQLException e) {
-                if (e.getMessage().equals("Illegal operation on empty result set.")) {
-                    return new TreeMap<>();
+                if (e.getMessage().equalsIgnoreCase("Illegal operation on empty result set.")) {
+                    return new HashSet<>();
                 }
                 throw new RuntimeException("Cannot get columns data of a MySQLResult", e);
             }
         }
-        return new HashMap<>();
+        return new HashSet<>();
     }
 
     @Override

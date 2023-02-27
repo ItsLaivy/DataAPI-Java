@@ -6,9 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class SQLiteResult extends DataResult {
 
@@ -36,24 +34,33 @@ public class SQLiteResult extends DataResult {
     }
 
     @Override
-    public @NotNull Map<String, String> results() {
+    public @NotNull Set<Map<String, Object>> results() {
         if (result != null) {
             try {
-                Map<String, String> map = new LinkedHashMap<>();
-
-                if (result.isClosed() || result.getObject(1) == null) {
-                    return map;
+                if (result.isClosed()) {
+                    throw new IllegalStateException("The result set is closed");
                 }
 
-                for (int row = 1; row <= result.getMetaData().getColumnCount(); row++) {
-                    map.put(result.getMetaData().getColumnName(row), result.getString(row));
+                Set<Map<String, Object>> set = new LinkedHashSet<>();
+                while (result.next()) {
+                    Map<String, Object> map = new LinkedHashMap<>();
+
+                    if (result.getObject(1) == null) {
+                        continue;
+                    }
+
+                    for (int row = 1; row <= result.getMetaData().getColumnCount(); row++) {
+                        map.put(result.getMetaData().getColumnName(row), result.getObject(row));
+                    }
+
+                    set.add(map);
                 }
-                return map;
+                return set;
             } catch (SQLException e) {
                 throw new RuntimeException("Cannot get results data of a SQLiteDataResult", e);
             }
         }
-        return new HashMap<>();
+        return new HashSet<>();
     }
 
     @Override

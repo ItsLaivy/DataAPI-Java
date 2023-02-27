@@ -1,6 +1,8 @@
 package codes.laivy.data.api;
 
 import codes.laivy.data.DataAPI;
+import codes.laivy.data.api.table.Table;
+import codes.laivy.data.api.table.Tableable;
 import codes.laivy.data.api.variables.ActiveVariable;
 import codes.laivy.data.api.variables.InactiveVariable;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +25,6 @@ public abstract class Receptor {
         this.database = database;
         this.name = name;
         this.bruteId = bruteId;
-
-        DataAPI.ACTIVE_VARIABLES.putIfAbsent(this, new LinkedHashSet<>());
-        DataAPI.INACTIVE_VARIABLES.putIfAbsent(this, new LinkedHashSet<>());
     }
 
     public void reload(boolean save) {
@@ -69,6 +68,23 @@ public abstract class Receptor {
             throw new IllegalStateException("This receptor '" + getBruteId() + "' is already loaded");
         }
 
+        for (Receptor receptor : getDatabase().getReceptors()) {
+            if (receptor.getBruteId().equals(getBruteId()) && receptor.isLoaded()) {
+                if (this instanceof Tableable) {
+                    if (receptor instanceof Tableable) {
+                        Table table = ((Tableable) this).getTable();
+                        Table receptorTable = ((Tableable) receptor).getTable();
+
+                        if (table.equals(receptorTable)) {
+                            throw new IllegalStateException("A receptor with id '" + getBruteId() + "' is already loaded at the database '" + getDatabase().getName() + "' and table '" + table.getName() + "'");
+                        }
+                    }
+                } else {
+                    throw new IllegalStateException("A receptor with id '" + getBruteId() + "' is already loaded at the database '" + getDatabase().getName() + "'");
+                }
+            }
+        }
+
         DataAPI.RECEPTORS.putIfAbsent(getDatabase(), new LinkedHashSet<>());
         DataAPI.RECEPTORS.get(getDatabase()).add(this);
 
@@ -87,8 +103,8 @@ public abstract class Receptor {
         save();
 
         DataAPI.RECEPTORS.get(getDatabase()).remove(this);
-        DataAPI.ACTIVE_VARIABLES.get(this).clear();
-        DataAPI.INACTIVE_VARIABLES.get(this).clear();;
+        DataAPI.ACTIVE_VARIABLES.remove(this);
+        DataAPI.INACTIVE_VARIABLES.remove(this);
 
         loaded = false;
     }

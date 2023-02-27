@@ -11,7 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.Serializable;
 import java.sql.DriverManager;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 public class SQLiteDatabaseType extends SQLDatabaseType {
 
@@ -49,27 +52,37 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
     }
 
     @Override
-    public @NotNull Map<String, String> data(@NotNull SQLReceptor receptor) {
+    public @NotNull Map<String, Object> receptorData(@NotNull SQLReceptor receptor) {
         SQLiteResult query = (SQLiteResult) receptor.getTable().getDatabase().query("SELECT * FROM '" + receptor.getTable().getName() + "' WHERE bruteid = '" + receptor.getBruteId() + "'");
-        Map<String, String> results = query.results();
+
+        @NotNull Set<Map<String, Object>> results = query.results();
         query.close();
-        return results;
+
+        if (results.isEmpty()) {
+            return new LinkedHashMap<>();
+        } else if (results.size() == 1) {
+            return new LinkedList<>(results).getFirst();
+        } else {
+            throw new UnsupportedOperationException("Multiples receptors with same brute id '" + receptor.getBruteId() + "' founded inside table '" + receptor.getTable().getName() + "' at database '" + receptor.getDatabase().getName() + "'");
+        }
     }
 
     @Override
     public void receptorLoad(@NotNull SQLReceptor receptor) {
-        Map<String, String> data = data(receptor);
+        Map<String, Object> data = receptorData(receptor);
         receptor.setNew(data.isEmpty());
 
         if (data.isEmpty()) {
             query((SQLiteDatabase) receptor.getTable().getDatabase(), "INSERT INTO '" + receptor.getTable().getName() + "' (name,bruteid,last_update) VALUES ('" + receptor.getName() + "','" + receptor.getBruteId() + "','" + DataAPI.getDate() + "')");
-            data = data(receptor);
+            data = receptorData(receptor);
         }
 
         int row = 0;
-        for (Map.Entry<String, String> map : data.entrySet()) {
-            if (row > 3) {
-                new InactiveVariable(receptor, map.getKey(), map.getValue());
+        for (Map.Entry<String, Object> map : data.entrySet()) {
+            if (map.getKey().equals("id")) {
+                receptor.setId((int) map.getValue());
+            } else if (row > 3) {
+                new InactiveVariable(receptor, map.getKey(), (String) map.getValue());
             }
             row++;
         }
@@ -113,7 +126,7 @@ public class SQLiteDatabaseType extends SQLDatabaseType {
 
             query.append("`").append(variable.getVariable().getName()).append("`='").append(data).append("',");
         }
-        query.append("`last_update`='").append(DataAPI.getDate()).append("', `name`='").append(receptor.getName()).append("'");
+        query.append("`last_update`='").append(DataAPI.getDate()).append("',`name`='").append(receptor.getName()).append("',`id`=").append(receptor.getId());
 
         query((SQLiteDatabase) receptor.getTable().getDatabase(), "UPDATE '" + receptor.getTable().getName() + "' SET " + query + " WHERE bruteid = '" + receptor.getBruteId() + "'");
     }

@@ -1,4 +1,4 @@
-package codes.laivy.data.redis.lettuce;
+package codes.laivy.data.redis.type.lettuce;
 
 import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Variable;
@@ -79,7 +79,7 @@ public class RedisLettuceDatabaseType extends DatabaseType<RedisReceptor, RedisV
     }
 
     @Override
-    public @NotNull Map<String, String> data(@NotNull RedisReceptor receptor) {
+    public @NotNull Map<String, Object> receptorData(@NotNull RedisReceptor receptor) {
         return new HashMap<>();
     }
 
