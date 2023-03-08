@@ -44,7 +44,7 @@ public class RedisVariable extends Variable {
             Table variableTable = ((Tableable) this).getTable();
 
             if (receptorTable.equals(variableTable)) {
-                return "DataAPI:" + getDatabase().getName() + "_" + variableTable.getName() + "_" + getName() + "_" + receptor.getBruteId();
+                return "dataapi_tableable:" + getDatabase().getName() + "_" + variableTable.getName() + "_" + getName() + "_" + receptor.getBruteId();
             } else {
                 throw new IllegalStateException("This receptor's table '" + receptorTable.getName() + "' doesn't matches with the variable's table '" + variableTable.getName() + "'.");
             }
@@ -53,7 +53,7 @@ public class RedisVariable extends Variable {
         } else if (receptor instanceof Tableable) {
             throw new IllegalStateException("This receptor is a tableable receptor, but the variable isn't.");
         } else {
-            return "DataAPI:" + getDatabase().getName() + "_" + getName() + "_" + receptor.getBruteId();
+            return "dataapi:" + getDatabase().getName() + "_" + getName() + "_" + receptor.getBruteId();
         }
     }
 

@@ -59,7 +59,7 @@ public class RedisReceptor extends Receptor {
 
     @ApiStatus.Experimental
     public @NotNull Set<@NotNull String> getRedisKeys() {
-        String pattern = "DataAPI:" + getDatabase().getName() + "_*_" + getBruteId();
+        String pattern = "dataapi:" + getDatabase().getName() + "_*_" + getBruteId();
         return new LinkedHashSet<>(getDatabase().getDatabaseType().getConnection().sync().keys(pattern));
     }
     @Override

@@ -4,6 +4,7 @@ import codes.laivy.data.api.Database;
 import codes.laivy.data.api.Receptor;
 import codes.laivy.data.api.Variable;
 import codes.laivy.data.redis.RedisDatabase;
+import codes.laivy.data.redis.RedisTable;
 import codes.laivy.data.redis.RedisVariable;
 import codes.laivy.data.redis.receptor.RedisReceptor;
 import codes.laivy.data.redis.type.RedisDatabaseType;
@@ -130,9 +131,19 @@ public class RedisLettuceDatabaseType extends RedisDatabaseType {
     @Override
     public @NotNull Receptor[] receptorList() {
         Set<Receptor> receptors = new LinkedHashSet<>();
+
         for (RedisDatabase database : getDatabases()) {
-            receptors.addAll(Arrays.asList(database.getReceptors()));
+            // Keys from tables
+            for (RedisTable table : database.getTables()) {
+                String pattern = "dataapi:" + database.getName() + "_" + table.getName() + "_*_*";
+                List<String> keys = getConnection().sync().keys(pattern);
+            }
+            // Keys from database (without tables)
+            String pattern = "dataapi:" + database.getName() + "_*_*";
+            List<String> keys = getConnection().sync().keys(pattern);
+            //
         }
+
         return receptors.toArray(new Receptor[0]);
     }
 

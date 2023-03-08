@@ -32,7 +32,7 @@ public class RedisTableableReceptor extends RedisReceptor implements Tableable {
     @Override
     @ApiStatus.Experimental
     public @NotNull Set<@NotNull String> getRedisKeys() {
-        String pattern = "DataAPI:" + getDatabase().getName() + "_" + getTable().getName() + "_*_" + getBruteId();
+        String pattern = "dataapi_tableable:" + getDatabase().getName() + "_" + getTable().getName() + "_*_" + getBruteId();
         return new LinkedHashSet<>(getDatabase().getDatabaseType().getConnection().sync().keys(pattern));
     }
 

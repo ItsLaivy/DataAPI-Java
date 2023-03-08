@@ -25,19 +25,19 @@ public class RedisDatabase extends Database {
     }
 
     public boolean has(@NotNull String key) {
-        key = "DataAPI:" + getName() + "_" + key;
+        key = "dataapi_custom:" + getName() + "_" + key;
         return getDatabaseType().getConnection().sync().exists(key);
     }
     public void remove(@NotNull String key) {
-        key = "DataAPI:" + getName() + "_" + key;
+        key = "dataapi_custom:" + getName() + "_" + key;
         getDatabaseType().getConnection().sync().del(key);
     }
     public void set(@NotNull String key, @Nullable Serializable value) {
-        key = "DataAPI:" + getName() + "_" + key;
+        key = "dataapi_custom:" + getName() + "_" + key;
         getDatabaseType().getConnection().sync().set(key, Variable.serialize(value));
     }
     public @Nullable Serializable get(@NotNull String key) {
-        key = "DataAPI:" + getName() + "_" + key;
+        key = "dataapi_custom:" + getName() + "_" + key;
 
         if (getDatabaseType().getConnection().sync().exists(key)) {
             return Variable.unserialize(getDatabaseType().getConnection().sync().get(key));

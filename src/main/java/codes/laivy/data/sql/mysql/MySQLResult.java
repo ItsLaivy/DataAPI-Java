@@ -1,6 +1,7 @@
 package codes.laivy.data.sql.mysql;
 
 import codes.laivy.data.query.DataResult;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public class MySQLResult extends DataResult {
         }
     }
 
+    @Contract()
     @Override
     public @NotNull Set<Map<String, Object>> results() {
         if (result != null) {
